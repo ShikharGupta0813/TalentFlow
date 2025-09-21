@@ -5,6 +5,9 @@ import SimpleStats from "@/components/SimpleStats";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import Heatmap from "@/components/Heatmap";
 import MiniAreaChart from "@/components/MiniAreaChart";
+import TopJobs from "@/components/TopJobs";
+import { TopCandidates } from "@/components/TopCandidates";
+
 type Route = "dashboard" | "jobs" | "candidates" | "assignments";
 
 export default function HRPortalApp() {
@@ -27,7 +30,8 @@ export default function HRPortalApp() {
                 </div>
                 <div className="space-y-6">
                   <div className="space-y-6">
-                  
+                  <TopJobs/>
+                    <TopCandidates/>
                   </div>
                 </div>
               </div>
