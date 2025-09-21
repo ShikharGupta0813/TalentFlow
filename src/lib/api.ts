@@ -24,7 +24,10 @@ export const api = {
 
   getApplicationsOverTime: () => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
-    return months.map((m) => ({ name: m, value: Math.floor(Math.random() * 1200) }));
+    return months.map((m) => ({
+      name: m,
+      value: Math.floor(Math.random() * 1200),
+    }));
   },
 
   getHeatmap: () => {
@@ -40,5 +43,50 @@ export const api = {
       });
     }
     return matrix.reverse();
+  },
+
+  getJobs: () => {
+    const stored = localStorage.getItem("jobs");
+    if (stored) return JSON.parse(stored);
+
+    // Initial dummy jobs if none exist in localStorage
+    const jobs = [
+      {
+        id: 1,
+        title: "Node.js Developer",
+        status: "Active",
+        location: "New York, NY",
+        type: "full time",
+        date: "Sep 21, 2025",
+        description: "We are looking for a talented Node.js Developer...",
+        requirements: ["3+ years of experience", "Proficient in Node.js", "REST APIs"],
+        tags: ["Node.js", "Express", "MongoDB", "AWS"],
+      },
+      {
+        id: 2,
+        title: "Backend Engineer",
+        status: "Archived",
+        location: "Berlin, Germany",
+        type: "full time",
+        date: "Sep 21, 2025",
+        description: "We are looking for a talented Backend Engineer...",
+        requirements: ["5+ years experience", "Java/Spring Boot", "Cloud services"],
+        tags: ["Java", "Spring Boot", "Docker", "Kubernetes"],
+      },
+      {
+        id: 3,
+        title: "Software Architect",
+        status: "Active",
+        location: "Miami, FL",
+        type: "full time",
+        date: "Sep 21, 2025",
+        description: "Looking for a skilled Software Architect...",
+        requirements: ["Architecture design", "Cloud-native systems"],
+        tags: ["Microservices", "AWS", "CI/CD", "TypeScript"],
+      },
+    ];
+
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+    return jobs;
   },
 };

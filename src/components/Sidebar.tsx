@@ -12,6 +12,7 @@ return (
 <Button variant={route === "candidates" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setRoute("candidates")}>Candidates</Button>
 <Button variant={route === "assignments" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setRoute("assignments")}>Assignments</Button>
 </nav>
+
 </aside>
 );
 }
