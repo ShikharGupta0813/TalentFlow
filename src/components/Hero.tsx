@@ -17,15 +17,16 @@ const Hero = () => {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 lg:px-12">
         <div className="text-2xl font-bold">HireFlow</div>
-        <div className="hidden md:flex items-center space-x-8">
-          <a href="#" className="hover:text-accent transition-colors">Home</a>
+        {/* <div className="hidden md:flex items-center space-x-8">
+          <a href="/home" className="hover:text-accent transition-colors">Home</a>
           <a href="#" className="hover:text-accent transition-colors">Find Talent</a>
           <a href="#" className="hover:text-accent transition-colors">ATS Dashboard</a>
           <a href="#" className="hover:text-accent transition-colors">Analytics</a>
           <a href="#" className="hover:text-accent transition-colors">Pricing</a>
-        </div>
-        <Button variant="secondary" className="bg-hero-foreground text-hero hover:bg-hero-foreground/90">
+        </div> */}
+        <Button variant="secondary" className="bg-hero-foreground text-hero hover:bg-hero-foreground/90"><a href="/hame">
           Start Free Trial
+          </a>
         </Button>
       </nav>
 
