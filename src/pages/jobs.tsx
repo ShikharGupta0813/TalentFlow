@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Grid, List } from "lucide-react";
 import Layout from "@/components/layout";
+import CreateJobModal from "@/components/JobModal";
 
 type Job = {
   id: number;
@@ -31,21 +32,51 @@ export default function JobsPage() {
   const [pageSize, setPageSize] = useState(10);
 
   const allTags = [
-    ".NET", "AWS", "Agile", "Angular", "Azure", "C#", "CI/CD", "Django",
-    "Express", "GCP", "Git", "Go", "GraphQL", "Java", "Jenkins", "Jest",
-    "Kubernetes", "Microservices", "MongoDB", "Node.js", "PostgreSQL",
-    "Python", "REST API", "React", "Redis", "Rust", "Scrum", "Spring Boot",
-    "TDD", "Terraform", "TypeScript", "Vue.js"
+    ".NET",
+    "AWS",
+    "Agile",
+    "Angular",
+    "Azure",
+    "C#",
+    "CI/CD",
+    "Django",
+    "Express",
+    "GCP",
+    "Git",
+    "Go",
+    "GraphQL",
+    "Java",
+    "Jenkins",
+    "Jest",
+    "Kubernetes",
+    "Microservices",
+    "MongoDB",
+    "Node.js",
+    "PostgreSQL",
+    "Python",
+    "REST API",
+    "React",
+    "Redis",
+    "Rust",
+    "Scrum",
+    "Spring Boot",
+    "TDD",
+    "Terraform",
+    "TypeScript",
+    "Vue.js",
   ];
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [open, setOpen] = useState(false);
 
   // ✅ Fetch jobs from backend
   useEffect(() => {
     async function fetchJobs() {
       try {
         const res = await fetch(
-          `/jobs?page=${page}&pageSize=${pageSize}&status=${status !== "All" ? status : ""}&search=${search}`
+          `/jobs?page=${page}&pageSize=${pageSize}&status=${
+            status !== "All" ? status : ""
+          }&search=${search}`
         );
         const result = await res.json();
         setJobs(result.data || []);
@@ -65,7 +96,9 @@ export default function JobsPage() {
 
   // ✅ Filter by selected tags client-side
   const filteredJobs = jobs.filter(
-    (job) => selectedTags.length === 0 || selectedTags.every((tag) => job.tags?.includes(tag))
+    (job) =>
+      selectedTags.length === 0 ||
+      selectedTags.every((tag) => job.tags?.includes(tag))
   );
 
   const totalPages = Math.ceil(total / pageSize);
@@ -95,9 +128,27 @@ export default function JobsPage() {
               >
                 <List size={16} />
               </Button>
-              <Button className="bg-indigo-600 hover:bg-indigo-700">
-                + Create Job
-              </Button>
+              <div>
+                {/* Create Job Button */}
+                <Button
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => setOpen(true)}
+                >
+                  + Create Job
+                </Button>
+
+                {/* Modal */}
+                {open && (
+                  <CreateJobModal
+                    open={open}
+                    onClose={() => setOpen(false)}
+                    onCreated={() => {
+                      // Refresh job list after creating
+                      console.log("Job created!");
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
 

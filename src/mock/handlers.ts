@@ -18,25 +18,56 @@ export const handlers = [
   http.get("/jobs", async ({ request }) => {
     await randomDelay();
     const url = new URL(request.url);
+
     const search = url.searchParams.get("search") ?? "";
     const status = url.searchParams.get("status");
+    const tags = url.searchParams.getAll("tags"); // ✅ multiple tags support
     const page = parseInt(url.searchParams.get("page") ?? "1", 10);
     const pageSize = parseInt(url.searchParams.get("pageSize") ?? "10", 10);
     const sort = url.searchParams.get("sort") ?? "order";
 
     let jobs = await db.jobs.toArray();
-    if (search) jobs = jobs.filter((j) => j.title.includes(search));
-    if (status) jobs = jobs.filter((j) => j.status === status);
 
+    // ✅ filter by search
+    if (search) {
+      jobs = jobs.filter((j) =>
+        j.title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // ✅ filter by status
+    if (status) {
+      jobs = jobs.filter((j) => j.status === status);
+    }
+
+    // ✅ filter by tags (all must match)
+    if (tags.length > 0) {
+      jobs = jobs.filter((j) => tags.every((tag) => j.tags?.includes(tag)));
+    }
+
+    // ✅ sorting
     jobs.sort((a, b) =>
       sort === "title" ? a.title.localeCompare(b.title) : a.order - b.order
     );
 
+    // ✅ pagination
     const start = (page - 1) * pageSize;
     const paginated = jobs.slice(start, start + pageSize);
 
     return HttpResponse.json({ data: paginated, total: jobs.length });
   }),
+
+  http.get("/jobs/:id", async ({ params }) => {
+  const { id } = params;
+  const job = await db.jobs.get(Number(id));
+
+  if (!job) {
+    return HttpResponse.json({ error: "Job not found" }, { status: 404 });
+  }
+
+  return HttpResponse.json(job);
+}),
+
 
   http.post("/jobs", async ({ request }) => {
     await randomDelay();
@@ -45,7 +76,7 @@ export const handlers = [
     const job: Job = {
       ...body,
       slug: body.title.toLowerCase().replace(/\s+/g, "-"),
-      status: body.status || "active"
+      status: body.status || "active",
     };
     const id = await db.jobs.add(job);
     return HttpResponse.json({ ...job, id });
@@ -71,11 +102,14 @@ export const handlers = [
 
     const jobs = await db.jobs.toArray();
     const moving = jobs.find((j) => j.order === fromOrder);
-    if (!moving) return HttpResponse.json({ error: "Job not found" }, { status: 404 });
+    if (!moving)
+      return HttpResponse.json({ error: "Job not found" }, { status: 404 });
 
     jobs.forEach((j) => {
-      if (fromOrder < toOrder && j.order > fromOrder && j.order <= toOrder) j.order--;
-      else if (fromOrder > toOrder && j.order < fromOrder && j.order >= toOrder) j.order++;
+      if (fromOrder < toOrder && j.order > fromOrder && j.order <= toOrder)
+        j.order--;
+      else if (fromOrder > toOrder && j.order < fromOrder && j.order >= toOrder)
+        j.order++;
     });
     moving.order = toOrder;
 
@@ -124,11 +158,12 @@ export const handlers = [
     await randomDelay();
     const id = Number(params.id);
     const candidate = await db.candidates.get(id);
-    if (!candidate) return HttpResponse.json({ error: "Not found" }, { status: 404 });
+    if (!candidate)
+      return HttpResponse.json({ error: "Not found" }, { status: 404 });
 
     const timeline = [
       { stage: "applied", date: new Date().toISOString() },
-      { stage: candidate.stage, date: new Date().toISOString() }
+      { stage: candidate.stage, date: new Date().toISOString() },
     ];
     return HttpResponse.json(timeline);
   }),
@@ -154,12 +189,13 @@ export const handlers = [
     await randomDelay();
     maybeError();
     const jobId = Number(params.jobId);
-    const body = (await request.json()) as Record<string,string>;
+    const body = (await request.json()) as Record<string, string>;
     const assessment = await db.assessments.get(jobId);
-    if (!assessment) return HttpResponse.json({ error: "Not found" }, { status: 404 });
+    if (!assessment)
+      return HttpResponse.json({ error: "Not found" }, { status: 404 });
 
     assessment.responses = body;
     await db.assessments.put(assessment);
     return HttpResponse.json({ success: true });
-  })
+  }),
 ];
