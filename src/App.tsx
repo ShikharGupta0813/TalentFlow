@@ -10,7 +10,7 @@ import JobDetails from "./pages/jobDetails";
 import NotFound from "./pages/NotFound";
 import CandidatesPage from "./pages/candidatePage";
 import CandidatesList from "./pages/candidateList";
-import CandidateProfile from "./pages/CandidateProfile";
+import CandidateProfile from "./pages/candidateProfile";
 import Assignments from "./pages/assignmentpage";
 import AssessmentBuilderPage from "./pages/assesmentBuilder";
 

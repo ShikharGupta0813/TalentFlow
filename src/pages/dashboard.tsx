@@ -6,8 +6,9 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import Heatmap from "@/components/Heatmap";
 import MiniAreaChart from "@/components/MiniAreaChart";
 import TopJobs from "@/components/TopJobs";
-import { TopCandidates } from "@/components/TopCandidates";
+import TopCandidates  from "@/components/TopCandidates";
 import Layout from "@/components/layout";
+import RecentAssessments from "@/components/RecentAssesments";
 
 type Route = "dashboard" | "jobs" | "candidates" | "assignments";
 
@@ -25,11 +26,13 @@ export default function Dashboard() {
                 <div className="lg:col-span-2 space-y-6">
                   <MiniAreaChart data={areaData} />
                   <Heatmap data={heatmapData} />
+                  <RecentAssessments/>
                 </div>
                 <div className="space-y-6">
                   <div className="space-y-6">
                   <TopJobs/>
                     <TopCandidates/>
+                    
                   </div>
                 </div>
               </div>

@@ -24,7 +24,7 @@ const Hero = () => {
           <a href="#" className="hover:text-accent transition-colors">Analytics</a>
           <a href="#" className="hover:text-accent transition-colors">Pricing</a>
         </div> */}
-        <Button variant="secondary" className="bg-hero-foreground text-hero hover:bg-hero-foreground/90"><a href="/hame">
+        <Button variant="secondary" className="bg-hero-foreground text-hero hover:bg-hero-foreground/90"><a href="/dashboard">
           Start Free Trial
           </a>
         </Button>
