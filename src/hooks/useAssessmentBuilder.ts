@@ -1,105 +1,134 @@
 import { useState, useEffect } from "react";
+import { Assessment, Section, Question } from "@/lib/type";
+import { loadState, saveState } from "@/lib/storage";
 
-export type QuestionType =
-  | "single"
-  | "multiple"
-  | "short"
-  | "long"
-  | "numeric"
-  | "file";
+export function useAssessmentBuilder() {
+  const [assessment, setAssessment] = useState<Assessment>({
+    id: Date.now(),
+    title: "New Assessment",
+    description: "Describe what this assessment will evaluate...",
+    sections: [],
+    totalQuestions: 0,
+    estimatedDuration: 0
+  });
 
-export type Question = {
-  id: string;
-  type: QuestionType;
-  title: string;
-  description?: string;
-  required?: boolean;
-  options?: string[];
-};
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewResponses, setPreviewResponses] = useState<Record<string, any>>({});
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
-export type Section = {
-  id: string;
-  title: string;
-  questions: Question[];
-};
-
-export function useAssessmentBuilder(storageKey: string = "assessment-builder") {
-  const [sections, setSections] = useState<Section[]>([]);
-
-  // 🔹 Load from localStorage
+  // load
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) setSections(JSON.parse(saved));
-  }, [storageKey]);
+    const saved = loadState<Assessment>("assessment-builder-state");
+    if (saved) {
+      setAssessment(saved);
+      if (saved.sections.length > 0) {
+        setSelectedSectionId(saved.sections[0].id);
+      }
+    }
+  }, []);
 
-  // 🔹 Save to localStorage
+  // persist & recalc metrics
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(sections));
-  }, [sections, storageKey]);
+    saveState("assessment-builder-state", assessment);
+    const totalQuestions = assessment.sections.reduce((sum, s) => sum + s.questions.length, 0);
+    const estimatedDuration = Math.max(2, totalQuestions * 2);
 
-  // Section actions
-  const addSection = (title: string = "Untitled Section") => {
-    setSections([...sections, { id: Date.now().toString(), title, questions: [] }]);
+    setAssessment(prev => ({ ...prev, totalQuestions, estimatedDuration }));
+  }, [assessment.sections]);
+
+  // --- actions ---
+  const addSection = () => {
+    const newSection: Section = {
+      id: Date.now(),
+      title: `Section ${assessment.sections.length + 1}`,
+      questions: []
+    };
+    setAssessment(prev => ({ ...prev, sections: [...prev.sections, newSection] }));
+    setSelectedSectionId(newSection.id);
+    setUnsavedChanges(true);
   };
 
-  const renameSection = (id: string, title: string) => {
-    setSections(sections.map((s) => (s.id === id ? { ...s, title } : s)));
+  const updateSection = (id: number, updates: Partial<Section>) => {
+    setAssessment(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => (s.id === id ? { ...s, ...updates } : s))
+    }));
+    setUnsavedChanges(true);
   };
 
-  const removeSection = (id: string) => {
-    setSections(sections.filter((s) => s.id !== id));
+  const deleteSection = (id: number) => {
+    setAssessment(prev => ({ ...prev, sections: prev.sections.filter(s => s.id !== id) }));
+    if (selectedSectionId === id) setSelectedSectionId(null);
+    setUnsavedChanges(true);
   };
 
-  // Question actions
-  const addQuestion = (sectionId: string, type: QuestionType) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? {
-              ...s,
-              questions: [
-                ...s.questions,
-                { id: Date.now().toString(), type, title: "Untitled Question" },
-              ],
-            }
-          : s
-      )
-    );
+  const addQuestion = (type: Question["type"]) => {
+    if (!selectedSectionId) return;
+    const section = assessment.sections.find(s => s.id === selectedSectionId);
+    if (!section) return;
+
+    const newQuestion: Question = {
+      id: Date.now(),
+      type,
+      title: "",
+      description: "",
+      required: false,
+      options: type.includes("choice") ? ["Option 1", "Option 2"] : [],
+      validation: type === "numeric" ? { min: 0, max: 100 } : { maxLength: 200 },
+      conditionalLogic: null
+    };
+
+    updateSection(selectedSectionId, { questions: [...section.questions, newQuestion] });
+    setSelectedQuestionId(newQuestion.id);
+    setShowQuestionModal(false);
   };
 
-  const updateQuestion = (sectionId: string, qId: string, data: Partial<Question>) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? {
-              ...s,
-              questions: s.questions.map((q) => (q.id === qId ? { ...q, ...data } : q)),
-            }
-          : s
-      )
-    );
+  const updateQuestion = (qid: number, updates: Partial<Question>) => {
+    if (!selectedSectionId) return;
+    updateSection(selectedSectionId, {
+      questions: assessment.sections
+        .find(s => s.id === selectedSectionId)!
+        .questions.map(q => (q.id === qid ? { ...q, ...updates } : q))
+    });
   };
 
-  const removeQuestion = (sectionId: string, qId: string) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? { ...s, questions: s.questions.filter((q) => q.id !== qId) }
-          : s
-      )
-    );
+  const deleteQuestion = (qid: number) => {
+    if (!selectedSectionId) return;
+    updateSection(selectedSectionId, {
+      questions: assessment.sections
+        .find(s => s.id === selectedSectionId)!
+        .questions.filter(q => q.id !== qid)
+    });
+    if (selectedQuestionId === qid) setSelectedQuestionId(null);
   };
 
-  const clear = () => setSections([]);
+  const saveAssessment = () => {
+    saveState(`assessment-${assessment.id}`, assessment);
+    setUnsavedChanges(false);
+  };
 
   return {
-    sections,
+    assessment,
+    selectedSectionId,
+    selectedQuestionId,
+    showQuestionModal,
+    showPreview,
+    previewResponses,
+    unsavedChanges,
+    setSelectedSectionId,
+    setSelectedQuestionId,
+    setShowQuestionModal,
+    setShowPreview,
+    setPreviewResponses,
     addSection,
-    renameSection,
-    removeSection,
+    updateSection,
+    deleteSection,
     addQuestion,
     updateQuestion,
-    removeQuestion,
-    clear,
+    deleteQuestion,
+    saveAssessment
   };
 }

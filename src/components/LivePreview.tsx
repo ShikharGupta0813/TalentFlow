@@ -1,36 +1,27 @@
-import { useAssessmentBuilder } from "@/hooks/useAssessmentBuilder";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-type Props = {
-  builder: ReturnType<typeof useAssessmentBuilder>;
-};
+export default function Preview({ builder }) {
+  const { assessment, setShowPreview } = builder;
 
-export default function LivePreview({ builder }: Props) {
   return (
-    <div className="p-4 bg-slate-900 rounded-lg border border-slate-800">
-      <h2 className="text-lg font-semibold mb-4">Live Preview</h2>
+    <div className="p-6 max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 mb-6">
+        <Button variant="ghost" onClick={() => setShowPreview(false)}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back
+        </Button>
+        <h2 className="font-bold text-xl">{assessment.title}</h2>
+      </div>
 
-      {builder.sections.map((s) => (
-        <div key={s.id} className="mb-4">
-          <h3 className="font-bold mb-2">{s.title}</h3>
-          {s.questions.map((q) => (
-            <div key={q.id} className="mb-2">
-              <p className="font-medium">{q.title}</p>
-              {q.type === "short" && <input className="w-full p-2 bg-slate-800 rounded" />}
-              {q.type === "long" && <textarea className="w-full p-2 bg-slate-800 rounded" />}
-              {q.type === "single" &&
-                q.options?.map((o, i) => (
-                  <label key={i} className="block">
-                    <input type="radio" name={q.id} /> {o}
-                  </label>
-                ))}
-              {q.type === "multiple" &&
-                q.options?.map((o, i) => (
-                  <label key={i} className="block">
-                    <input type="checkbox" /> {o}
-                  </label>
-                ))}
-              {q.type === "numeric" && <input type="number" className="p-2 bg-slate-800 rounded" />}
-              {q.type === "file" && <input type="file" />}
+      {assessment.sections.map((s, si) => (
+        <div key={s.id} className="mb-6">
+          <h3 className="font-semibold mb-2">{s.title}</h3>
+          {s.questions.map((q, qi) => (
+            <div key={q.id} className="mb-4 p-3 border rounded-lg">
+              <p className="font-medium">
+                {si + 1}.{qi + 1} {q.title}
+              </p>
+              <p className="text-sm text-muted-foreground">{q.description}</p>
             </div>
           ))}
         </div>

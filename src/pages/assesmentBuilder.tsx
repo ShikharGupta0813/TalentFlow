@@ -1,50 +1,50 @@
-import Layout from "@/components/layout";
 import { useAssessmentBuilder } from "@/hooks/useAssessmentBuilder";
+import Layout from "@/components/layout";
+import Toolbar from "@/components/Toolbar";
 import SectionList from "@/components/SectionList";
 import QuestionList from "@/components/QuestionList";
-import LivePreview from "@/components/LivePreview";
 import QuestionEditor from "@/components/QuestionEditor";
-import { useState } from "react";
+import Preview from "@/components/LivePreview";
+import QuestionTypeModal from "@/components/QuestionTypeModal";
 
-export default function AssessmentBuilderPage() {
-  const builder = useAssessmentBuilder("assessment-builder");
-  const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+export default function AssessmentBuilder() {
+  const builder = useAssessmentBuilder();
+  const selectedSection =
+    builder.assessment.sections.find(
+      (s) => s.id === builder.selectedSectionId
+    ) || null;
+  const selectedQuestion =
+    selectedSection?.questions.find(
+      (q) => q.id === builder.selectedQuestionId
+    ) || null;
+
+  if (builder.showPreview) {
+    return (
+      <Layout>
+        <Preview builder={builder} />
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="p-6 flex flex-col gap-6">
-        <h1 className="text-3xl font-bold text-purple-400">Assessment Builder</h1>
+      <div className="flex flex-col min-h-screen bg-slate-900 text-white">
+        {/* Top Toolbar */}
+        <Toolbar builder={builder} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Sections */}
-          <SectionList
+        {/* Main content (3-column layout) */}
+        <div className="flex flex-1 overflow-hidden">
+          <SectionList builder={builder} />
+          <QuestionList builder={builder} section={selectedSection} />
+          <QuestionEditor
             builder={builder}
-            selectedSection={selectedSection}
-            onSelect={setSelectedSection}
+            section={selectedSection}
+            question={selectedQuestion}
           />
-
-          {/* Middle: Questions */}
-          {selectedSection && (
-            <QuestionList
-              builder={builder}
-              sectionId={selectedSection}
-              onSelect={setSelectedQuestion}
-              selectedQuestion={selectedQuestion}
-            />
-          )}
-
-          {/* Right: Editor or Preview */}
-          {selectedQuestion ? (
-            <QuestionEditor
-              builder={builder}
-              sectionId={selectedSection!}
-              questionId={selectedQuestion}
-            />
-          ) : (
-            <LivePreview builder={builder} />
-          )}
         </div>
+
+        {/* Modal for adding new questions */}
+        <QuestionTypeModal builder={builder} />
       </div>
     </Layout>
   );
