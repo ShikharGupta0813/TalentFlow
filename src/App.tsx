@@ -11,6 +11,8 @@ import NotFound from "./pages/NotFound";
 import CandidatesPage from "./pages/candidatePage";
 import CandidatesList from "./pages/candidateList";
 import CandidateProfile from "./pages/CandidateProfile";
+import Assignments from "./pages/assignmentpage";
+import AssessmentBuilderPage from "./pages/assesmentBuilder";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +30,8 @@ const App = () => (
           <Route path="/candidates" element={<CandidatesPage/>} />
           <Route path="/candidates/:jobId" element={<CandidatesList/>} />
           <Route path="/candidates/:jobId/:candidateId" element={<CandidateProfile />} />
-          <Route path="/assignments" element={<h1>coming soon</h1>} />
+          <Route path="/assignments" element={<Assignments/>} />
+          <Route path="/assignments/build/general" element={<AssessmentBuilderPage/>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
