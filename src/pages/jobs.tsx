@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight, Grid, List } from "lucide-react";
 import { api } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
+import Layout from "@/components/layout";
 
 type Job = ReturnType<typeof api.getJobs>[0];
 
@@ -52,10 +53,7 @@ export default function JobsPage() {
 
   return (
     
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
-          <Sidebar route={route} setRoute={setRoute} />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Navbar />
+    <Layout>
     <div className="p-6 space-y-6">
       {/* Search + Actions */}
       <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg shadow-md space-y-4">
@@ -217,7 +215,6 @@ export default function JobsPage() {
         </Button>
       </div>
     </div>
-    </div>
-    </div>
+    </Layout>
   );
 }

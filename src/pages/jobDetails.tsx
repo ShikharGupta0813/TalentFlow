@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { useState } from "react";
+import Layout from "@/components/layout";
 
 export default function JobDetails() {
   const { id } = useParams();
@@ -17,10 +18,7 @@ export default function JobDetails() {
   if (!job) return <p className="text-red-500">Job not found</p>;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
-          <Sidebar route={route} setRoute={setRoute} />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Navbar />
+    <Layout>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -110,7 +108,6 @@ export default function JobDetails() {
         </div>
       </div>
     </div>
-    </div>
-    </div>
+    </Layout>
   );
 }

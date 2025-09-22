@@ -9,8 +9,6 @@ const [dark, setDark] = useState(false);
 return (
 <div className="flex items-center justify-between px-6 py-4 bg-white shadow sticky top-0 z-10">
 <div className="flex items-center gap-3">
-<Search className="text-gray-400" />
-<Input placeholder="Search..." className="w-64" />
 </div>
 <div className="flex items-center gap-4">
 <Button variant="ghost" size="icon" onClick={() => setDark(!dark)}>

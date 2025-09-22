@@ -3,11 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/landinpage";
-import Ind from "./pages/portal";
+import LandingPage from "./pages/landinpage";
+import Dashboard from "./pages/dashboard";
 import Jobs from "./pages/jobs"
 import JobDetails from "./pages/jobDetails";
 import NotFound from "./pages/NotFound";
+import CandidatesPage from "./pages/candidatePage";
+import CandidatesList from "./pages/candidateList";
+import CandidateProfile from "./pages/CandidateProfile";
 
 const queryClient = new QueryClient();
 
@@ -18,11 +21,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/hame" element={<Ind />} />
-          <Route path="/home" element={<Jobs />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:id" element={<JobDetails />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/candidates" element={<CandidatesPage/>} />
+          <Route path="/candidates/:jobId" element={<CandidatesList/>} />
+          <Route path="/candidates/:jobId/:candidateId" element={<CandidateProfile />} />
+          <Route path="/assignments" element={<h1>coming soon</h1>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

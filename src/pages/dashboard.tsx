@@ -7,18 +7,16 @@ import Heatmap from "@/components/Heatmap";
 import MiniAreaChart from "@/components/MiniAreaChart";
 import TopJobs from "@/components/TopJobs";
 import { TopCandidates } from "@/components/TopCandidates";
+import Layout from "@/components/layout";
 
 type Route = "dashboard" | "jobs" | "candidates" | "assignments";
 
-export default function HRPortalApp() {
+export default function Dashboard() {
   const [route, setRoute] = useState<Route>("dashboard");
   const { stats, areaData, heatmapData } = useDashboardData();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
-      <Sidebar route={route} setRoute={setRoute} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Navbar />
+    <Layout>
         <main className="flex-1 p-6 overflow-y-auto">
           {route === "dashboard" ? (
             <div className="space-y-6">
@@ -40,7 +38,6 @@ export default function HRPortalApp() {
             <h1>coming soon</h1>
           )}
         </main>
-      </div>
-    </div>
+    </Layout>
   );
 }
