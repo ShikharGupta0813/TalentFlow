@@ -3,32 +3,51 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout";
+import { db, Job } from "@/mock/db";
+import NewJobModal from "@/components/JobModal"; // ✅ your create job modal
 
 export default function JobDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [job, setJob] = useState<any>(null);
+  const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [openEdit, setOpenEdit] = useState(false);
 
-  type Route = "dashboard" | "jobs" | "candidates" | "assignments";
-  const [route, setRoute] = useState<Route>("dashboard");
-
+  // Fetch job by ID
   useEffect(() => {
     async function fetchJob() {
       try {
-        const res = await fetch(`/jobs/${id}`);
-        const data = await res.json();
-        setJob(data);
+        if (!id) return;
+        const jobData = await db.jobs.get(Number(id));
+        setJob(jobData || null);
       } catch (error) {
         console.error("Failed to fetch job:", error);
       } finally {
         setLoading(false);
       }
     }
-
-    if (id) fetchJob();
+    fetchJob();
   }, [id]);
+
+  async function handleDelete() {
+    if (!id) return;
+    await db.jobs.delete(Number(id));
+    navigate("/jobs"); // redirect after delete
+  }
+  async function refreshJobs() {
+    const allJobs = await db.jobs.toArray();
+    setJob(job);
+  }
+
+  async function handleArchive() {
+    if (!id || !job) return;
+    await db.jobs.update(Number(id), {
+      status: job.status === "archived" ? "active" : "archived",
+    });
+    const updated = await db.jobs.get(Number(id));
+    setJob(updated || null);
+  }
 
   if (loading) return <p className="text-gray-400">Loading job details...</p>;
   if (!job) return <p className="text-red-500">Job not found</p>;
@@ -36,7 +55,7 @@ export default function JobDetails() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
+        {/* Top header bar */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold mt-2">Job Details</h1>
@@ -45,18 +64,28 @@ export default function JobDetails() {
             </p>
           </div>
           <div className="space-x-2">
-            <Button variant="outline">Edit</Button>
-            <Button variant="outline">Archive</Button>
-            <Button variant="destructive">Delete</Button>
+            <Button variant="outline" onClick={() => setOpenEdit(true)}>
+              ✏️ Edit
+            </Button>
+            <Button variant="outline" onClick={handleArchive}>
+              {job.status === "archived" ? "Restore" : "Archive"}
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              🗑 Delete
+            </Button>
           </div>
         </div>
 
         {/* Gradient Job Card */}
         <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg text-white">
-          <span className="px-2 py-1 bg-green-600 rounded text-xs">
+          <span
+            className={`px-2 py-1 rounded text-xs ${
+              job.status === "active" ? "bg-green-600" : "bg-gray-600"
+            }`}
+          >
             {job.status}
           </span>
-          <h2 className="text-2xl font-bold mt-2">{job.title}</h2>
+          <h2 className="text-3xl font-bold mt-2">{job.title}</h2>
           <p className="flex gap-4 text-sm mt-1">
             <span>{job.location}</span>
             <span className="px-2 py-0.5 bg-gray-800 rounded">{job.type}</span>
@@ -74,8 +103,11 @@ export default function JobDetails() {
             <Card className="p-6 bg-gray-900">
               <h3 className="text-lg font-semibold">Requirements</h3>
               <ul className="mt-2 space-y-2">
-                {job.requirements?.map((req: string, idx: number) => (
-                  <li key={idx} className="bg-gray-800 px-3 py-2 rounded">
+                {job.requirements?.map((req, idx) => (
+                  <li
+                    key={idx}
+                    className="bg-gray-800 px-3 py-2 rounded text-gray-200"
+                  >
                     {req}
                   </li>
                 ))}
@@ -85,7 +117,7 @@ export default function JobDetails() {
             <Card className="p-6 bg-gray-900">
               <h3 className="text-lg font-semibold">Skills & Tags</h3>
               <div className="flex flex-wrap gap-2 mt-3">
-                {job.tags?.map((tag: string, idx: number) => (
+                {job.tags?.map((tag, idx) => (
                   <span
                     key={idx}
                     className="px-3 py-1 bg-gray-800 rounded-full text-sm"
@@ -99,16 +131,17 @@ export default function JobDetails() {
 
           {/* Right section */}
           <div className="space-y-6">
+            {/* Candidate Pipeline (static for now) */}
             <Card className="p-6 bg-gray-900">
               <h3 className="text-lg font-semibold">Candidate Pipeline</h3>
               <div className="grid grid-cols-2 gap-3 mt-3">
                 {[
-                  { label: "APPLIED", value: 6, color: "bg-blue-600" },
+                  { label: "APPLIED", value: 10, color: "bg-blue-600" },
                   { label: "SCREEN", value: 8, color: "bg-yellow-600" },
-                  { label: "TECH", value: 7, color: "bg-purple-600" },
-                  { label: "OFFER", value: 7, color: "bg-green-600" },
-                  { label: "HIRED", value: 5, color: "bg-teal-600" },
-                  { label: "REJECTED", value: 5, color: "bg-red-600" },
+                  { label: "TECH", value: 4, color: "bg-purple-600" },
+                  { label: "OFFER", value: 5, color: "bg-green-600" },
+                  { label: "HIRED", value: 7, color: "bg-teal-600" },
+                  { label: "REJECTED", value: 7, color: "bg-red-600" },
                 ].map((stage) => (
                   <div
                     key={stage.label}
@@ -121,14 +154,17 @@ export default function JobDetails() {
               </div>
             </Card>
 
-            <Card className="p-6 bg-gray-900">
+            {/* Job Information */}
+            <Card className="p-6 bg-gray-900 text-sm space-y-2">
               <h3 className="text-lg font-semibold">Job Information</h3>
-              <p className="mt-2 text-sm">📅 Created: {job.date}</p>
-              <p className="mt-1 text-sm">
-                🔗 Slug: {job.title.toLowerCase().replace(/\s+/g, "-")}
+              <p>📅 Created: {new Date().toLocaleString()}</p>
+              <p>
+                🔗 Slug:{" "}
+                {job.slug || job.title.toLowerCase().replace(/\s+/g, "-")}
               </p>
             </Card>
 
+            {/* Quick Actions */}
             <Card className="p-6 bg-gray-900">
               <h3 className="text-lg font-semibold">Quick Actions</h3>
               <Button className="w-full mt-3">👥 View Candidates</Button>
@@ -139,6 +175,16 @@ export default function JobDetails() {
           </div>
         </div>
       </div>
+
+      {/* Edit Job Modal (prefilled) */}
+      {openEdit && (
+        <NewJobModal
+          open={openEdit} // ✅ pass boolean state
+          job={job} // ✅ pass job data
+          onClose={() => setOpenEdit(false)}
+          onSaved={refreshJobs} // optional: callback to refresh jobs after save
+        />
+      )}
     </Layout>
   );
 }

@@ -28,21 +28,37 @@ export const handlers = [
 
     let jobs = await db.jobs.toArray();
 
-    // ✅ filter by search
+    // ✅ filter by search (case-insensitive)
     if (search) {
-      jobs = jobs.filter((j) =>
-        j.title.toLowerCase().includes(search.toLowerCase())
+      const s = search.toLowerCase();
+      jobs = jobs.filter((j) => {
+        const inTitle = j.title?.toLowerCase().includes(s);
+        const inDescription = j.description?.toLowerCase().includes(s);
+        const inRequirements = j.requirements?.some((req: string) =>
+          req.toLowerCase().includes(s)
+        );
+        const inTags = j.tags?.some((tag: string) =>
+          tag.toLowerCase().includes(s)
+        );
+        return inTitle || inDescription || inRequirements || inTags;
+      });
+    }
+
+    // ✅ filter by status (case-insensitive)
+    if (status) {
+      jobs = jobs.filter(
+        (j) => j.status?.toLowerCase() === status.toLowerCase()
       );
     }
 
-    // ✅ filter by status
-    if (status) {
-      jobs = jobs.filter((j) => j.status === status);
-    }
-
-    // ✅ filter by tags (all must match)
+    // ✅ filter by tags (case-insensitive, all tags must match)
     if (tags.length > 0) {
-      jobs = jobs.filter((j) => tags.every((tag) => j.tags?.includes(tag)));
+      const normalizedTags = tags.map((t) => t.toLowerCase());
+      jobs = jobs.filter((j) =>
+        normalizedTags.every((tag) =>
+          j.tags?.some((jobTag: string) => jobTag.toLowerCase() === tag)
+        )
+      );
     }
 
     // ✅ sorting
@@ -58,16 +74,15 @@ export const handlers = [
   }),
 
   http.get("/jobs/:id", async ({ params }) => {
-  const { id } = params;
-  const job = await db.jobs.get(Number(id));
+    const { id } = params;
+    const job = await db.jobs.get(Number(id));
 
-  if (!job) {
-    return HttpResponse.json({ error: "Job not found" }, { status: 404 });
-  }
+    if (!job) {
+      return HttpResponse.json({ error: "Job not found" }, { status: 404 });
+    }
 
-  return HttpResponse.json(job);
-}),
-
+    return HttpResponse.json(job);
+  }),
 
   http.post("/jobs", async ({ request }) => {
     await randomDelay();
@@ -169,6 +184,31 @@ export const handlers = [
   }),
 
   // ---- Assessments ----
+  http.get("/assessments", async ({ request }) => {
+  await randomDelay();
+  const url = new URL(request.url);
+  const jobId = url.searchParams.get("jobId");
+
+  let assessments = await db.assessments.toArray();
+  const jobs = await db.jobs.toArray();
+
+  if (jobId) {
+    assessments = assessments.filter((a) => a.jobId === Number(jobId));
+  }
+
+  // attach job title
+  const data = assessments.map((a) => {
+    const job = jobs.find((j) => j.id === a.jobId);
+    return {
+      ...a,
+      jobTitle: job ? job.title : "Unknown Job",
+    };
+  });
+
+  return HttpResponse.json({ data, total: data.length });
+}),
+
+
   http.get("/assessments/:jobId", async ({ params }) => {
     await randomDelay();
     const jobId = Number(params.jobId);

@@ -3,6 +3,21 @@ import Dexie, { Table } from "dexie";
 
 // ------------------ Types ------------------
 export type JobStatus = "active" | "archived";
+export type JobType = "Full-time" | "Part-time" | "Contract" | "Internship";
+
+export interface Job {
+  id?: number;
+  title: string;
+  slug: string;
+  status: JobStatus;
+  type: JobType;
+  location: string;
+  description: string;
+  requirements: string[];
+  tags: string[];
+  order: number;
+}
+
 export type CandidateStage =
   | "applied"
   | "screen"
@@ -11,22 +26,17 @@ export type CandidateStage =
   | "hired"
   | "rejected";
 
-export interface Job {
-  id?: number;
-  title: string;
-  slug: string;
-  status: JobStatus;
-  tags: string[];
-  order: number;
-}
-
 export interface Candidate {
   id?: number;
   jobId: number;
+  jobTitle: string; // ✅ new field
   name: string;
   email: string;
+  phone: string;
+  appliedDate: string;
   stage: CandidateStage;
 }
+
 
 export interface Assessment {
   jobId: number;
@@ -42,10 +52,10 @@ class AppDB extends Dexie {
 
   constructor() {
     super("MockHRDB");
-    this.version(1).stores({
+    this.version(2).stores({
       jobs: "++id, title, slug, status, order",
-      candidates: "++id, jobId, name, email, stage",
-      assessments: "jobId"
+      candidates: "++id, jobId, name, email, phone, appliedDate, stage",
+      assessments: "jobId",
     });
   }
 }
@@ -68,7 +78,7 @@ const FIRST_NAMES = [
   "Daniel",
   "Olivia",
   "James",
-  "Ava"
+  "Ava",
 ];
 
 const LAST_NAMES = [
@@ -81,7 +91,7 @@ const LAST_NAMES = [
   "Lewis",
   "Walker",
   "Young",
-  "King"
+  "King",
 ];
 
 function generateName(i: number) {
@@ -90,19 +100,111 @@ function generateName(i: number) {
   return `${first} ${last}`;
 }
 
+// Random phone generator
+function randomPhone() {
+  return `+1-${Math.floor(100 + Math.random() * 900)}-${Math.floor(
+    100 + Math.random() * 900
+  )}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 // ------------------ Seed Data ------------------
 export async function seed() {
   const jobCount = await db.jobs.count();
   if (jobCount > 0) return; // already seeded
 
   // 25 Jobs
-  const jobs: Job[] = Array.from({ length: 25 }).map((_, i) => ({
-    title: `Job ${i + 1}`,
-    slug: slugify(`Job ${i + 1}`),
-    status: Math.random() > 0.3 ? "active" : "archived",
-    tags: ["tag1", "tag2"],
-    order: i + 1
-  }));
+  const jobTitles = [
+    "Frontend Developer",
+    "Backend Engineer",
+    "Full Stack Developer",
+    "DevOps Engineer",
+    "Data Scientist",
+    "Machine Learning Engineer",
+    "Product Manager",
+    "UI/UX Designer",
+    "QA Engineer",
+    "Mobile App Developer",
+    "Cloud Architect",
+    "Security Analyst",
+    "Business Analyst",
+    "Technical Writer",
+    "Solutions Architect",
+    "Database Administrator",
+    "Game Developer",
+    "AI Researcher",
+    "Systems Engineer",
+    "Site Reliability Engineer",
+    "Project Manager",
+    "IT Support Specialist",
+    "Network Engineer",
+    "Software Engineer Intern",
+    "Blockchain Developer",
+  ];
+
+  const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
+  const statuses = ["active", "archived"];
+  const locations = [
+    "San Francisco, CA",
+    "New York, NY",
+    "London, UK",
+    "Berlin, Germany",
+    "Toronto, Canada",
+    "Bangalore, India",
+    "Remote",
+  ];
+  const jobRequirements: Record<string, string[]> = {
+    "Frontend Developer": [
+      "Proficiency in React, Vue, or Angular",
+      "Strong knowledge of HTML, CSS, and JavaScript",
+      "Experience with responsive design and cross-browser compatibility",
+    ],
+    "Backend Engineer": [
+      "Experience with Node.js, Python, or Java",
+      "Understanding of RESTful APIs and microservices",
+      "Database design and query optimization skills",
+    ],
+    "Data Scientist": [
+      "Strong knowledge of Python and machine learning libraries",
+      "Experience with data visualization tools",
+      "Understanding of statistics and data modeling",
+    ],
+    "Product Manager": [
+      "Strong communication and leadership skills",
+      "Experience with agile methodologies",
+      "Ability to define product roadmap and strategy",
+    ],
+    // fallback for jobs not explicitly listed
+    default: [
+      "Bachelor's degree in relevant field",
+      "Strong problem-solving skills",
+      "Excellent communication and teamwork",
+    ],
+  };
+
+  const jobs: Job[] = Array.from({ length: 25 }).map((_, i) => {
+    const title = jobTitles[i % jobTitles.length];
+    const type = jobTypes[i % jobTypes.length] as JobType;
+    const status = statuses[Math.random() > 0.3 ? 0 : 1] as JobStatus;
+    const location = locations[i % locations.length];
+    const requirements = jobRequirements[title] ?? jobRequirements.default;
+
+    return {
+      id: i + 1,
+      title,
+      slug: slugify(title),
+      status,
+      type,
+      location,
+      description: `We are looking for a ${title} to join our growing team. You will work on exciting projects, collaborate with cross-functional teams, and help shape the future of our product.`,
+      requirements,
+      tags: [
+        title.split(" ")[0].toLowerCase(),
+        type.toLowerCase(),
+        location.includes("Remote") ? "remote" : "onsite",
+      ],
+      order: i + 1,
+    };
+  });
 
   const jobIds = await db.jobs.bulkAdd(jobs, { allKeys: true });
 
@@ -113,16 +215,29 @@ export async function seed() {
     "tech",
     "offer",
     "hired",
-    "rejected"
+    "rejected",
   ];
 
-  const candidates: Candidate[] = Array.from({ length: 1000 }).map((_, i) => {
+   const candidates: Candidate[] = Array.from({ length: 1000 }).map((_, i) => {
     const name = generateName(i);
+
+    // Pick a random jobId
+    const jobId = jobIds[Math.floor(Math.random() * jobIds.length)] as number;
+
+    // Find the job title for that jobId
+    const job = jobs.find((j) => j.id === jobId);
+    const jobTitle = job ? job.title : "Unknown Role";
+
     return {
-      jobId: jobIds[Math.floor(Math.random() * jobIds.length)] as number,
+      jobId,
+      jobTitle, // ✅ add job title directly to candidate
       name,
       email: `${name.replace(/\s+/g, ".").toLowerCase()}@example.com`,
-      stage: stages[Math.floor(Math.random() * stages.length)]
+      phone: randomPhone(),
+      appliedDate: new Date(
+        Date.now() - Math.floor(Math.random() * 60) * 24 * 60 * 60 * 1000
+      ).toISOString(), // random last 60 days
+      stage: stages[Math.floor(Math.random() * stages.length)],
     };
   });
 
@@ -134,8 +249,8 @@ export async function seed() {
     questions: Array.from({ length: 12 }).map((_, i) => ({
       id: `q${i + 1}`,
       text: `Question ${i + 1}`,
-      options: ["A", "B", "C", "D"]
-    }))
+      options: ["A", "B", "C", "D"],
+    })),
   }));
 
   await db.assessments.bulkAdd(assessments);

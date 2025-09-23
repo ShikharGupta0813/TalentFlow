@@ -5,8 +5,8 @@ import "./index.css";
 import { startMocks } from "@/mock/init";
 
 async function bootstrap() {
-  await startMocks(); // start fake backend first
-
+  await startMocks();
+  
   const root = ReactDOM.createRoot(document.getElementById("root")!);
   root.render(
     <React.StrictMode>

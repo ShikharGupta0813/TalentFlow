@@ -8,7 +8,6 @@ import Dashboard from "./pages/dashboard";
 import Jobs from "./pages/jobs"
 import JobDetails from "./pages/jobDetails";
 import NotFound from "./pages/NotFound";
-import CandidatesPage from "./pages/candidatePage";
 import CandidatesList from "./pages/candidateList";
 import CandidateProfile from "./pages/candidateProfile";
 import Assignments from "./pages/assignmentpage";
@@ -27,8 +26,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:id" element={<JobDetails />} />
-          <Route path="/candidates" element={<CandidatesPage/>} />
-          <Route path="/candidates/:jobId" element={<CandidatesList/>} />
+          <Route path="/candidates" element={<CandidatesList/>} />
           <Route path="/candidates/:jobId/:candidateId" element={<CandidateProfile />} />
           <Route path="/assignments" element={<Assignments/>} />
           <Route path="/assignments/build/general" element={<AssessmentBuilderPage/>} />

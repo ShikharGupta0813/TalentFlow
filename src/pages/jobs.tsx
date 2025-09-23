@@ -142,10 +142,6 @@ export default function JobsPage() {
                   <CreateJobModal
                     open={open}
                     onClose={() => setOpen(false)}
-                    onCreated={() => {
-                      // Refresh job list after creating
-                      console.log("Job created!");
-                    }}
                   />
                 )}
               </div>
