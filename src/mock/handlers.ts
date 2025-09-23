@@ -234,7 +234,7 @@ export const handlers = [
     if (!assessment)
       return HttpResponse.json({ error: "Not found" }, { status: 404 });
 
-    assessment.responses = body;
+    // assessment.responses = body;
     await db.assessments.put(assessment);
     return HttpResponse.json({ success: true });
   }),

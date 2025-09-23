@@ -14,25 +14,27 @@ import {
   isSameMonth,
 } from "date-fns";
 
-export function Heatmap({ data }: { data: { date: string; value: number }[] }) {
-  // Map input data
+export default function Heatmap({
+  data,
+}: {
+  data: { date: string; value: number }[];
+}) {
+  // --- DATA PREPARATION (No changes here) ---
   const dataMap = new Map(data.map((d) => [d.date, d.value]));
-
-  // Last 26 weeks (6 months)
   const end = endOfWeek(new Date());
-  const start = startOfWeek(subMonths(end, 6));
+  // Displaying a full year for a better look, similar to the example
+  const start = startOfWeek(subMonths(end, 11)); 
   const allDays = eachDayOfInterval({ start, end });
 
-  // Build weeks
   const weeks: Date[][] = [];
   for (let i = 0; i < allDays.length; i += 7) {
     weeks.push(allDays.slice(i, i + 7));
   }
 
-  // Fill missing days with random values (simulate activity)
   const filledData = allDays.map((day) => {
     const dateStr = format(day, "yyyy-MM-dd");
-    const value = dataMap.get(dateStr) ?? Math.floor(Math.random() * 100); // simulate
+    // Using a smaller random value range for a more realistic look
+    const value = dataMap.get(dateStr) ?? Math.floor(Math.random() * 5); 
     return { date: dateStr, value };
   });
 
@@ -40,65 +42,60 @@ export function Heatmap({ data }: { data: { date: string; value: number }[] }) {
   const filledMap = new Map(filledData.map((d) => [d.date, d.value]));
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-sm border-slate-200 bg-white">
       <CardHeader>
-        <CardTitle>Applications Statistics</CardTitle>
+        <CardTitle className="text-slate-700">Applications Statistics</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Heatmap grid */}
-        <div className="flex">
-          <div className="grid grid-rows-7 grid-flow-col gap-1">
-            {weeks.map((week, wIdx) =>
-              week.map((day, dIdx) => {
-                const dateStr = format(day, "yyyy-MM-dd");
-                const value = filledMap.get(dateStr) || 0;
-                const alpha = 0.2 + (value / max) * 0.8; // stronger purple
-                const bg = `rgba(139, 92, 246, ${alpha.toFixed(2)})`; // purple-500
-                return (
-                  <TooltipProvider key={`${wIdx}-${dIdx}`}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="rounded-sm cursor-pointer hover:ring-1 hover:ring-purple-500"
-                          style={{
-                            width: 12,
-                            height: 12,
-                            background: bg,
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {dateStr}: {value} candidates
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Month labels */}
-        {/* Month labels */}
-        <div className="flex mt-2 text-xs text-gray-500">
+        {/* Main container using flexbox for precise alignment */}
+        <div className="flex gap-1 overflow-x-auto pb-2">
           {weeks.map((week, wIdx) => {
-            const firstDay = week[0];
-            const prevWeek = weeks[wIdx - 1]?.[0];
-            if (!prevWeek || !isSameMonth(firstDay, prevWeek)) {
-              return (
-                <div key={wIdx} className="w-16 text-left">
-                  {format(firstDay, "MMM")}
+            // Determine if this column should display a month label
+            const firstDayOfWeek = week[0];
+            const prevWeekFirstDay = weeks[wIdx - 1]?.[0];
+            const showMonthLabel =
+              wIdx === 0 || !isSameMonth(firstDayOfWeek, prevWeekFirstDay);
+
+            return (
+              <div key={wIdx} className="flex flex-col">
+                {/* Month Label: positioned above the column */}
+                <div className="h-5 text-xs text-slate-500">
+                  {showMonthLabel ? format(firstDayOfWeek, "MMM") : <>&nbsp;</>}
                 </div>
-              );
-            }
-            return <div key={wIdx} className="w-16" />;
+                {/* Week Column: A vertical stack of day squares */}
+                <div className="flex flex-col gap-1">
+                  {week.map((day, dIdx) => {
+                    if (!day) return <div key={dIdx} />;
+                    const dateStr = format(day, "yyyy-MM-dd");
+                    const value = filledMap.get(dateStr) || 0;
+                    const alpha = 0.15 + (value / max) * 0.85;
+                    const bg = `rgba(139, 92, 246, ${alpha.toFixed(2)})`; // purple-500
+
+                    return (
+                      <TooltipProvider key={dIdx} delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="h-3 w-3 rounded-sm cursor-pointer"
+                              style={{ background: bg }}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-slate-800 text-white border-slate-700">
+                            <p className="text-sm">
+                              {value} applications on{" "}
+                              {format(day, "MMM d, yyyy")}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })}
+                </div>
+              </div>
+            );
           })}
         </div>
       </CardContent>
     </Card>
   );
 }
-
-export default Heatmap;

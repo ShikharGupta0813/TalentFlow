@@ -37,11 +37,15 @@ export interface Candidate {
   stage: CandidateStage;
 }
 
-export interface Assessment {
+export interface Assessment  {
   jobId: number;
-  questions: { id: string; text: string; options: string[] }[];
-  responses?: Record<string, string>;
-}
+  title: string;
+  role: string;
+  duration: string;
+  questions: number;
+  submissions: number;
+  status: "Active" | "Draft";
+};
 
 // ✅ Notes
 export interface Note {
@@ -265,14 +269,99 @@ export async function seed() {
   }
 
   // 3 Assessments
-  const assessments: Assessment[] = jobIds.slice(0, 3).map((jobId) => ({
-    jobId: jobId as number,
-    questions: Array.from({ length: 12 }).map((_, i) => ({
-      id: `q${i + 1}`,
-      text: `Question ${i + 1}`,
-      options: ["A", "B", "C", "D"],
-    })),
-  }));
 
+const assessments: Assessment[] = [
+  {
+    jobId: 1,
+    title: "JavaScript Fundamentals Test",
+    role: "Frontend Developer",
+    duration: "45 mins",
+    questions: 20,
+    submissions: 35,
+    status: "Active",
+  },
+  {
+    jobId: 2,
+    title: "React.js Practical Assessment",
+    role: "Frontend Developer",
+    duration: "60 mins",
+    questions: 15,
+    submissions: 28,
+    status: "Active",
+  },
+  {
+    jobId: 3,
+    title: "Node.js & Express Backend Quiz",
+    role: "Backend Developer",
+    duration: "50 mins",
+    questions: 18,
+    submissions: 22,
+    status: "Draft",
+  },
+  {
+    jobId: 4,
+    title: "Database Design & SQL Queries",
+    role: "Database Engineer",
+    duration: "40 mins",
+    questions: 12,
+    submissions: 40,
+    status: "Active",
+  },
+  {
+    jobId: 5,
+    title: "REST API Development Challenge",
+    role: "Backend Developer",
+    duration: "75 mins",
+    questions: 10,
+    submissions: 18,
+    status: "Active",
+  },
+  {
+    jobId: 6,
+    title: "System Design Case Study",
+    role: "Software Engineer",
+    duration: "90 mins",
+    questions: 5,
+    submissions: 12,
+    status: "Draft",
+  },
+  {
+    jobId: 7,
+    title: "Cloud Infrastructure Basics",
+    role: "DevOps Engineer",
+    duration: "45 mins",
+    questions: 14,
+    submissions: 20,
+    status: "Active",
+  },
+  {
+    jobId: 8,
+    title: "CI/CD Pipeline Configuration",
+    role: "DevOps Engineer",
+    duration: "60 mins",
+    questions: 8,
+    submissions: 15,
+    status: "Draft",
+  },
+  {
+    jobId: 9,
+    title: "Python Data Structures Test",
+    role: "Backend Developer",
+    duration: "40 mins",
+    questions: 16,
+    submissions: 25,
+    status: "Active",
+  },
+  {
+    jobId: 10,
+    title: "Machine Learning Basics Quiz",
+    role: "Data Scientist",
+    duration: "50 mins",
+    questions: 12,
+    submissions: 10,
+    status: "Active",
+  },
+  
+];
   await db.assessments.bulkAdd(assessments);
 }
