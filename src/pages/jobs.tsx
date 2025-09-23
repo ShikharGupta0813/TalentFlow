@@ -111,7 +111,7 @@ export default function JobsPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <Input
               className="bg-slate-800 border-slate-700 text-white"
-              placeholder="Search jobs by title or description..."
+              placeholder="Search jobs by title , description , tags , or requirements..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

@@ -29,7 +29,7 @@ export type CandidateStage =
 export interface Candidate {
   id?: number;
   jobId: number;
-  jobTitle: string; // ✅ new field
+  jobTitle: string;
   name: string;
   email: string;
   phone: string;
@@ -37,11 +37,31 @@ export interface Candidate {
   stage: CandidateStage;
 }
 
-
 export interface Assessment {
   jobId: number;
   questions: { id: string; text: string; options: string[] }[];
   responses?: Record<string, string>;
+}
+
+// ✅ Notes
+export interface Note {
+  id?: number;
+  candidateId: number;
+  author: string;
+  content: string;
+  createdAt: string;
+}
+
+// ✅ Timeline Events
+export interface TimelineEvent {
+  id?: number;
+  candidateId: number;
+  type: "system" | "note" | "stage-change";
+  description: string;
+  createdAt: string;
+  author?: string;
+  fromStage?: CandidateStage;
+  toStage?: CandidateStage;
 }
 
 // ------------------ Dexie DB ------------------
@@ -49,13 +69,17 @@ class AppDB extends Dexie {
   jobs!: Table<Job, number>;
   candidates!: Table<Candidate, number>;
   assessments!: Table<Assessment, number>;
+  notes!: Table<Note, number>;
+  timeline!: Table<TimelineEvent, number>;
 
   constructor() {
     super("MockHRDB");
-    this.version(2).stores({
+    this.version(3).stores({
       jobs: "++id, title, slug, status, order",
       candidates: "++id, jobId, name, email, phone, appliedDate, stage",
       assessments: "jobId",
+      notes: "++id, candidateId, createdAt",
+      timeline: "++id, candidateId, createdAt",
     });
   }
 }
@@ -67,32 +91,8 @@ function slugify(str: string) {
   return str.toLowerCase().replace(/\s+/g, "-");
 }
 
-// Arrays for candidate generation
-const FIRST_NAMES = [
-  "John",
-  "Alice",
-  "David",
-  "Sophia",
-  "Michael",
-  "Emma",
-  "Daniel",
-  "Olivia",
-  "James",
-  "Ava",
-];
-
-const LAST_NAMES = [
-  "Smith",
-  "Johnson",
-  "Brown",
-  "Taylor",
-  "Anderson",
-  "Clark",
-  "Lewis",
-  "Walker",
-  "Young",
-  "King",
-];
+const FIRST_NAMES = ["John", "Alice", "David", "Sophia", "Michael", "Emma", "Daniel", "Olivia", "James", "Ava"];
+const LAST_NAMES = ["Smith", "Johnson", "Brown", "Taylor", "Anderson", "Clark", "Lewis", "Walker", "Young", "King"];
 
 function generateName(i: number) {
   const first = FIRST_NAMES[i % FIRST_NAMES.length];
@@ -100,12 +100,14 @@ function generateName(i: number) {
   return `${first} ${last}`;
 }
 
-// Random phone generator
 function randomPhone() {
   return `+1-${Math.floor(100 + Math.random() * 900)}-${Math.floor(
     100 + Math.random() * 900
   )}-${Math.floor(1000 + Math.random() * 9000)}`;
 }
+
+const daysAgo = (days: number) =>
+  new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
 // ------------------ Seed Data ------------------
 export async function seed() {
@@ -114,43 +116,20 @@ export async function seed() {
 
   // 25 Jobs
   const jobTitles = [
-    "Frontend Developer",
-    "Backend Engineer",
-    "Full Stack Developer",
-    "DevOps Engineer",
-    "Data Scientist",
-    "Machine Learning Engineer",
-    "Product Manager",
-    "UI/UX Designer",
-    "QA Engineer",
-    "Mobile App Developer",
-    "Cloud Architect",
-    "Security Analyst",
-    "Business Analyst",
-    "Technical Writer",
-    "Solutions Architect",
-    "Database Administrator",
-    "Game Developer",
-    "AI Researcher",
-    "Systems Engineer",
-    "Site Reliability Engineer",
-    "Project Manager",
-    "IT Support Specialist",
-    "Network Engineer",
-    "Software Engineer Intern",
+    "Frontend Developer","Backend Engineer","Full Stack Developer","DevOps Engineer",
+    "Data Scientist","Machine Learning Engineer","Product Manager","UI/UX Designer",
+    "QA Engineer","Mobile App Developer","Cloud Architect","Security Analyst",
+    "Business Analyst","Technical Writer","Solutions Architect","Database Administrator",
+    "Game Developer","AI Researcher","Systems Engineer","Site Reliability Engineer",
+    "Project Manager","IT Support Specialist","Network Engineer","Software Engineer Intern",
     "Blockchain Developer",
   ];
 
   const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
   const statuses = ["active", "archived"];
   const locations = [
-    "San Francisco, CA",
-    "New York, NY",
-    "London, UK",
-    "Berlin, Germany",
-    "Toronto, Canada",
-    "Bangalore, India",
-    "Remote",
+    "San Francisco, CA","New York, NY","London, UK","Berlin, Germany",
+    "Toronto, Canada","Bangalore, India","Remote",
   ];
   const jobRequirements: Record<string, string[]> = {
     "Frontend Developer": [
@@ -173,7 +152,6 @@ export async function seed() {
       "Experience with agile methodologies",
       "Ability to define product roadmap and strategy",
     ],
-    // fallback for jobs not explicitly listed
     default: [
       "Bachelor's degree in relevant field",
       "Strong problem-solving skills",
@@ -195,7 +173,7 @@ export async function seed() {
       status,
       type,
       location,
-      description: `We are looking for a ${title} to join our growing team. You will work on exciting projects, collaborate with cross-functional teams, and help shape the future of our product.`,
+      description: `We are looking for a ${title} to join our growing team.`,
       requirements,
       tags: [
         title.split(" ")[0].toLowerCase(),
@@ -209,39 +187,82 @@ export async function seed() {
   const jobIds = await db.jobs.bulkAdd(jobs, { allKeys: true });
 
   // 1000 Candidates
-  const stages: CandidateStage[] = [
-    "applied",
-    "screen",
-    "tech",
-    "offer",
-    "hired",
-    "rejected",
-  ];
+  const stages: CandidateStage[] = ["applied", "screen", "tech", "offer", "hired", "rejected"];
 
-   const candidates: Candidate[] = Array.from({ length: 1000 }).map((_, i) => {
+  const candidates: Candidate[] = Array.from({ length: 1000 }).map((_, i) => {
     const name = generateName(i);
-
-    // Pick a random jobId
     const jobId = jobIds[Math.floor(Math.random() * jobIds.length)] as number;
-
-    // Find the job title for that jobId
     const job = jobs.find((j) => j.id === jobId);
     const jobTitle = job ? job.title : "Unknown Role";
 
     return {
       jobId,
-      jobTitle, // ✅ add job title directly to candidate
+      jobTitle,
       name,
       email: `${name.replace(/\s+/g, ".").toLowerCase()}@example.com`,
       phone: randomPhone(),
-      appliedDate: new Date(
-        Date.now() - Math.floor(Math.random() * 60) * 24 * 60 * 60 * 1000
-      ).toISOString(), // random last 60 days
+      appliedDate: daysAgo(Math.floor(Math.random() * 60)),
       stage: stages[Math.floor(Math.random() * stages.length)],
     };
   });
 
-  await db.candidates.bulkAdd(candidates);
+  const candidateIds = await db.candidates.bulkAdd(candidates, { allKeys: true });
+
+  // Seed Notes + Timeline for each candidate
+  for (const id of candidateIds) {
+    const notes: Note[] = [
+      {
+        candidateId: id as number,
+        author: "Sarah Johnson",
+        content:
+          "Initial phone screening completed. Candidate shows strong technical background and good communication skills. @John Smith please review for next steps.",
+        createdAt: daysAgo(35),
+      },
+      {
+        candidateId: id as number,
+        author: "Mike Chen",
+        content:
+          "Technical assessment results look promising. Scored well on algorithms and system design. Ready for technical interview round.",
+        createdAt: daysAgo(33),
+      },
+    ];
+    await db.notes.bulkAdd(notes);
+
+    const timeline: TimelineEvent[] = [
+      {
+        candidateId: id as number,
+        type: "system",
+        description: "Application received",
+        createdAt: daysAgo(36),
+      },
+      {
+        candidateId: id as number,
+        type: "note",
+        description: "Added initial screening notes",
+        author: "Sarah Johnson",
+        createdAt: daysAgo(35),
+      },
+      {
+        candidateId: id as number,
+        type: "stage-change",
+        description: "Stage changed from applied to screen",
+        fromStage: "applied",
+        toStage: "screen",
+        author: "HR Team",
+        createdAt: daysAgo(35),
+      },
+      {
+        candidateId: id as number,
+        type: "stage-change",
+        description: "Stage changed from screen to tech",
+        fromStage: "screen",
+        toStage: "tech",
+        author: "HR Team",
+        createdAt: daysAgo(33),
+      },
+    ];
+    await db.timeline.bulkAdd(timeline);
+  }
 
   // 3 Assessments
   const assessments: Assessment[] = jobIds.slice(0, 3).map((jobId) => ({

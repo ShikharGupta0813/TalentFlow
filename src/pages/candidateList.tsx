@@ -14,7 +14,6 @@ import {
   CheckCircle,
   XCircle,
   Hourglass,
-
 } from "lucide-react";
 import Layout from "@/components/layout";
 import {
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Kanban from "@/components/Kanban"; // ✅ import your Kanban component
 
 export default function CandidatesList() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export default function CandidatesList() {
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("All");
   const [job, setJob] = useState("All Jobs");
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "kanban">("list"); // ✅ replaced "grid" with "kanban"
 
   useEffect(() => {
     (async () => {
@@ -158,8 +158,8 @@ export default function CandidatesList() {
             </Button>
             <Button
               size="icon"
-              variant={view === "grid" ? "default" : "outline"}
-              onClick={() => setView("grid")}
+              variant={view === "kanban" ? "default" : "outline"} // ✅ changed from "grid"
+              onClick={() => setView("kanban")} // ✅ set kanban
               className="rounded-lg"
             >
               <Grid size={18} />
@@ -167,55 +167,57 @@ export default function CandidatesList() {
           </div>
         </div>
 
-        {/* ✅ Candidates List */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Candidates List</h2>
-          <span className="text-slate-400">{filtered.length} results</span>
-        </div>
+        {/* Conditional Rendering */}
+        {view === "list" ? (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Candidates List</h2>
+              <span className="text-slate-400">{filtered.length} results</span>
+            </div>
 
-        <div
-          className={`grid gap-4 ${
-            view === "grid" ? "grid-cols-2" : "grid-cols-1"
-          }`}
-        >
-          {filtered.map((c) => (
-            <Card
-              key={c.id}
-              onClick={() => navigate(`/candidates/${c.id}`)}
-              className="p-4 bg-slate-900 border border-slate-800 cursor-pointer hover:shadow-lg"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg font-semibold">{c.name}</h2>
-                  <p className="text-sm text-slate-400 flex items-center gap-2">
-                    <Mail size={16} /> {c.email}
-                  </p>
-                  <p className="text-sm text-slate-400 flex items-center gap-2">
-                    <Phone size={16} /> {c.phone}
-                  </p>
-                  <p className="text-sm text-slate-400 flex items-center gap-2">
-                    <Hourglass size={16} /> {c.jobTitle}
-                  </p>
-                  <p className="text-sm text-slate-400 flex items-center gap-2">
-                    <Calendar size={16} /> Applied{" "}
-                    {new Date(c.appliedDate).toLocaleDateString()}
-                  </p>
-                </div>
-                <span
-                  className={`px-3 py-1 text-xs rounded-full capitalize ${
-                    c.stage === "hired"
-                      ? "bg-green-600"
-                      : c.stage === "rejected"
-                      ? "bg-red-600"
-                      : "bg-purple-600"
-                  }`}
+            <div className="grid gap-4 grid-cols-1">
+              {filtered.map((c) => (
+                <Card
+                  key={c.id}
+                  onClick={() => navigate(`/candidates/${c.id}`)}
+                  className="p-4 bg-slate-900 border border-slate-800 cursor-pointer hover:shadow-lg"
                 >
-                  {c.stage}
-                </span>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-lg font-semibold">{c.name}</h2>
+                      <p className="text-sm text-slate-400 flex items-center gap-2">
+                        <Mail size={16} /> {c.email}
+                      </p>
+                      <p className="text-sm text-slate-400 flex items-center gap-2">
+                        <Phone size={16} /> {c.phone}
+                      </p>
+                      <p className="text-sm text-slate-400 flex items-center gap-2">
+                        <Hourglass size={16} /> {c.jobTitle}
+                      </p>
+                      <p className="text-sm text-slate-400 flex items-center gap-2">
+                        <Calendar size={16} /> Applied{" "}
+                        {new Date(c.appliedDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full capitalize ${
+                        c.stage === "hired"
+                          ? "bg-green-600"
+                          : c.stage === "rejected"
+                          ? "bg-red-600"
+                          : "bg-purple-600"
+                      }`}
+                    >
+                      {c.stage}
+                    </span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </>
+        ) : (
+          <Kanban candidates={filtered} /> // ✅ show Kanban component
+        )}
       </div>
     </Layout>
   );
