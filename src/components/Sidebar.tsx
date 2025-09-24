@@ -81,8 +81,8 @@ export default function Sidebar() {
       icon: <Users className="h-5 w-5" />,
     },
     {
-      path: "/assignments",
-      label: "Assignments",
+      path: "/assessments",
+      label: "Assessments",
       icon: <ClipboardList className="h-5 w-5" />,
     },
   ];

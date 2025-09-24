@@ -29,7 +29,6 @@ export default function Assignments() {
     try {
       const res = await fetch("/assessments");
       const json = await res.json();
-      console.log("Fetched assignments:", json.data); // 👈 check the actual keys
       setAssignments(json.data);
     } catch (e) {
       console.error("Failed to fetch assessments", e);

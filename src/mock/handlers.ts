@@ -205,7 +205,7 @@ export const handlers = [
       };
     });
 
-    return HttpResponse.json({ data, total: data.length });
+    return HttpResponse.json({ data });
   }),
 
   // GET a single assessment by id

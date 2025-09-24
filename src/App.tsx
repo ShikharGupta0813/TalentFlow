@@ -10,7 +10,7 @@ import JobDetails from "./pages/jobDetails";
 import NotFound from "./pages/NotFound";
 import CandidatesList from "./pages/candidateList";
 import CandidateProfile from "./pages/candidateProfile";
-import Assignments from "./pages/assignmentpage";
+import Assessments from "./pages/assesmentpage";
 import AssessmentBuilderPage from "./pages/assesmentBuilder";
 
 const queryClient = new QueryClient();
@@ -28,8 +28,8 @@ const App = () => (
           <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/candidates" element={<CandidatesList/>} />
           <Route path="/candidates/:candidateId" element={<CandidateProfile />} />
-          <Route path="/assignments" element={<Assignments/>} />
-          <Route path="/assignments/build/general" element={<AssessmentBuilderPage/>} />
+          <Route path="/assessments" element={<Assessments/>} />
+          <Route path="/assessments/build/general" element={<AssessmentBuilderPage/>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
