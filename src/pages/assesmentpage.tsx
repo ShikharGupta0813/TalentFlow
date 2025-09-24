@@ -4,6 +4,7 @@ import { Clock, Users, FileCheck, Layers } from "lucide-react";
 import Layout from "@/components/layout";
 import NewAssignmentModal from "@/components/AssignmentModal";
 import { useState, useEffect } from "react";
+import Preview from "@/components/LivePreview"; // ✅ use shared Preview
 
 type Assessment = {
   id: number;
@@ -14,7 +15,7 @@ type Assessment = {
   duration: string;
   submissions: number;
   status: "Active" | "Draft";
-  sections: any[]; // you can type Section later
+  sections: any[];
   totalQuestions: number;
   jobTitle?: string;
 };
@@ -23,62 +24,57 @@ export default function Assignments() {
   const [open, setOpen] = useState(false);
   const [assignments, setAssignments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Assessment | null>(null);
 
- useEffect(() => {
-  const load = async () => {
-    try {
-      const res = await fetch("/assessments");
-      const json = await res.json();
-      setAssignments(json.data);
-    } catch (e) {
-      console.error("Failed to fetch assessments", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-  load();
-}, []);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("/assessments");
+        const json = await res.json();
+        setAssignments(json.data);
+      } catch (e) {
+        console.error("Failed to fetch assessments", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
+  // ✅ if Preview mode
+  if (selected) {
+    return (
+      <Layout>
+        <Preview assessment={selected} onBack={() => setSelected(null)} />
+      </Layout>
+    );
+  }
 
-  // ✅ Stats
-const total = assignments.length;
-
-const active = assignments.filter((a) => a.status === "Active").length;
-
-const submissions = assignments.reduce(
-  (sum, a) => sum + (a.submissions ?? 0),
-  0
-);
-
-const totalQuestions = assignments.reduce(
-  (sum, a) => sum + (a.totalQuestions ?? 0),
-  0
-);
-
-// Extract minutes safely from duration (expects format like "45 mins")
-const durations = assignments.map((a) => {
-  if (!a.duration) return 0;
-  const match = a.duration.match(/\d+/);
-  return match ? parseInt(match[0]) : 0;
-});
-
-const avgDuration =
-  durations.length > 0
+  // Stats
+  const total = assignments.length;
+  const active = assignments.filter((a) => a.status === "Active").length;
+  const submissions = assignments.reduce((sum, a) => sum + (a.submissions ?? 0), 0);
+  const totalQuestions = assignments.reduce((sum, a) => sum + (a.totalQuestions ?? 0), 0);
+  const durations = assignments.map((a) => {
+    if (!a.duration) return 0;
+    const match = a.duration.match(/\d+/);
+    return match ? parseInt(match[0]) : 0;
+  });
+  const avgDuration = durations.length > 0
     ? Math.round(durations.reduce((s, d) => s + d, 0) / durations.length)
     : 0;
-
 
   return (
     <Layout>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-purple-400">Assignments</h1>
+          <h1 className="text-3xl font-bold text-purple-400">Assessments</h1>
           <Button
             className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
             onClick={() => setOpen(true)}
           >
-            + New Assignment
+            + New Assessment
           </Button>
           {open && <NewAssignmentModal onClose={() => setOpen(false)} />}
         </div>
@@ -86,11 +82,11 @@ const avgDuration =
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="p-6 bg-slate-900 border border-slate-800">
-            <h2 className="text-sm text-slate-400">Total Assignments</h2>
+            <h2 className="text-sm text-slate-400">Total Assessments</h2>
             <p className="text-2xl font-bold">{total}</p>
           </Card>
           <Card className="p-6 bg-slate-900 border border-slate-800">
-            <h2 className="text-sm text-slate-400">Active Assignments</h2>
+            <h2 className="text-sm text-slate-400">Active Assessments</h2>
             <p className="text-2xl font-bold text-green-400">{active}</p>
           </Card>
           <Card className="p-6 bg-slate-900 border border-slate-800">
@@ -106,11 +102,11 @@ const avgDuration =
         </div>
 
         {/* List */}
-        <h2 className="text-xl font-semibold mb-4">Your Assignments</h2>
+        <h2 className="text-xl font-semibold mb-4">Your Assessments</h2>
         {loading ? (
-          <p className="text-slate-400">Loading assignments...</p>
+          <p className="text-slate-400">Loading assessments...</p>
         ) : assignments.length === 0 ? (
-          <p className="text-slate-400">No assignments created yet.</p>
+          <p className="text-slate-400">No assessments created yet.</p>
         ) : (
           <div className="space-y-4">
             {assignments.map((a) => (
@@ -124,9 +120,7 @@ const avgDuration =
                     <h3 className="text-lg font-bold text-white">{a.title}</h3>
                     <p className="text-slate-400">{a.role}</p>
                     {a.description && (
-                      <p className="text-slate-500 text-sm mt-1">
-                        {a.description}
-                      </p>
+                      <p className="text-slate-500 text-sm mt-1">{a.description}</p>
                     )}
 
                     <div className="flex gap-4 mt-3 text-sm text-slate-400">
@@ -156,12 +150,10 @@ const avgDuration =
                     >
                       {a.status}
                     </span>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => setSelected(a)}>
                       Preview
                     </Button>
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
+                    <Button variant="outline" size="sm">Edit</Button>
                   </div>
                 </div>
               </Card>

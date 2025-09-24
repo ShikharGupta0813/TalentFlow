@@ -20,9 +20,9 @@ export default function NewAssignmentModal({ onClose }: Props) {
   const handleSelect = (type: "general" | number) => {
     onClose();
     if (type === "general") {
-      navigate("/assignments/build/general");
+      navigate("/assessments/build/general");
     } else {
-      navigate(`/assignments/build/${type}`);
+      navigate(`/assessments/build/${type}`);
     }
   };
 
