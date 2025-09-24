@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
-import { Assessment, Section, Question } from "@/lib/type";
+import { Assessment, Section, Question } from "@/mock/type";
 import { loadState, saveState } from "@/lib/storage";
 
 export function useAssessmentBuilder() {
   const [assessment, setAssessment] = useState<Assessment>({
     id: Date.now(),
+    jobId: Date.now(), // placeholder job link
     title: "New Assessment",
     description: "Describe what this assessment will evaluate...",
+    role: "Untitled Role",
+    duration: "0 mins", // now string
+    submissions: 0,
+    status: "Draft",
     sections: [],
-    totalQuestions: 0,
-    estimatedDuration: 0
+    totalQuestions: 0
   });
 
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
@@ -19,7 +23,7 @@ export function useAssessmentBuilder() {
   const [previewResponses, setPreviewResponses] = useState<Record<string, any>>({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
-  // load
+  // Load saved state
   useEffect(() => {
     const saved = loadState<Assessment>("assessment-builder-state");
     if (saved) {
@@ -30,13 +34,17 @@ export function useAssessmentBuilder() {
     }
   }, []);
 
-  // persist & recalc metrics
+  // Persist & recalc metrics
   useEffect(() => {
-    saveState("assessment-builder-state", assessment);
     const totalQuestions = assessment.sections.reduce((sum, s) => sum + s.questions.length, 0);
-    const estimatedDuration = Math.max(2, totalQuestions * 2);
+    const estimatedMinutes = Math.max(2, totalQuestions * 2);
+    const newDuration = `${estimatedMinutes} mins`;
 
-    setAssessment(prev => ({ ...prev, totalQuestions, estimatedDuration }));
+    if (assessment.totalQuestions !== totalQuestions || assessment.duration !== newDuration) {
+      setAssessment(prev => ({ ...prev, totalQuestions, duration: newDuration }));
+    }
+
+    saveState("assessment-builder-state", assessment);
   }, [assessment.sections]);
 
   // --- actions ---
@@ -74,11 +82,14 @@ export function useAssessmentBuilder() {
       id: Date.now(),
       type,
       title: "",
-      description: "",
-      required: false,
-      options: type.includes("choice") ? ["Option 1", "Option 2"] : [],
-      validation: type === "numeric" ? { min: 0, max: 100 } : { maxLength: 200 },
-      conditionalLogic: null
+      options: type.includes("choice") ? ["Option 1", "Option 2"] : undefined,
+      validationRules:
+        type === "numeric"
+          ? { min: 0, max: 100, required: false }
+          : type.includes("text")
+          ? { maxLength: 200, required: false }
+          : { required: false },
+      conditional: undefined
     };
 
     updateSection(selectedSectionId, { questions: [...section.questions, newQuestion] });

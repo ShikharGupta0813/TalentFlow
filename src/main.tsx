@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { startMocks } from "@/mock/init";
-import { db } from "@/mock/db";
 
 async function bootstrap() {
   await startMocks();

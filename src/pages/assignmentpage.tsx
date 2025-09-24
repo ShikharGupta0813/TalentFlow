@@ -1,18 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Clock, Users, FileCheck } from "lucide-react";
+import { Clock, Users, FileCheck, Layers } from "lucide-react";
 import Layout from "@/components/layout";
 import NewAssignmentModal from "@/components/AssignmentModal";
 import { useState, useEffect } from "react";
 
 type Assessment = {
+  id: number;
   jobId: number;
   title: string;
+  description: string;
   role: string;
   duration: string;
-  questions: number;
   submissions: number;
   status: "Active" | "Draft";
+  sections: any[]; // you can type Section later
+  totalQuestions: number;
   jobTitle?: string;
 };
 
@@ -21,35 +24,50 @@ export default function Assignments() {
   const [assignments, setAssignments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/assessments");
-        const json = await res.json();
-        setAssignments(json.data);
-      } catch (e) {
-        console.error("Failed to fetch assessments", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+ useEffect(() => {
+  const load = async () => {
+    try {
+      const res = await fetch("/assessments");
+      const json = await res.json();
+      console.log("Fetched assignments:", json.data); // 👈 check the actual keys
+      setAssignments(json.data);
+    } catch (e) {
+      console.error("Failed to fetch assessments", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+  load();
+}, []);
+
 
   // ✅ Stats
-  const total = assignments.length;
-  const active = assignments.filter((a) => a.status === "Active").length;
-  const submissions = assignments.reduce((sum, a) => sum + a.submissions, 0);
-  const avgDuration =
-    assignments.length > 0
-      ? Math.round(
-          assignments.reduce((sum, a) => {
-            const match = a.duration.match(/\d+/);
-            const mins = match ? parseInt(match[0]) : 0;
-            return sum + mins;
-          }, 0) / assignments.length
-        )
-      : 0;
+const total = assignments.length;
+
+const active = assignments.filter((a) => a.status === "Active").length;
+
+const submissions = assignments.reduce(
+  (sum, a) => sum + (a.submissions ?? 0),
+  0
+);
+
+const totalQuestions = assignments.reduce(
+  (sum, a) => sum + (a.totalQuestions ?? 0),
+  0
+);
+
+// Extract minutes safely from duration (expects format like "45 mins")
+const durations = assignments.map((a) => {
+  if (!a.duration) return 0;
+  const match = a.duration.match(/\d+/);
+  return match ? parseInt(match[0]) : 0;
+});
+
+const avgDuration =
+  durations.length > 0
+    ? Math.round(durations.reduce((s, d) => s + d, 0) / durations.length)
+    : 0;
+
 
   return (
     <Layout>
@@ -92,11 +110,13 @@ export default function Assignments() {
         <h2 className="text-xl font-semibold mb-4">Your Assignments</h2>
         {loading ? (
           <p className="text-slate-400">Loading assignments...</p>
+        ) : assignments.length === 0 ? (
+          <p className="text-slate-400">No assignments created yet.</p>
         ) : (
           <div className="space-y-4">
             {assignments.map((a) => (
               <Card
-                key={a.jobId}
+                key={a.id}
                 className="p-6 bg-slate-900 border border-slate-800 hover:shadow-lg transition"
               >
                 <div className="flex justify-between items-center">
@@ -104,10 +124,18 @@ export default function Assignments() {
                   <div>
                     <h3 className="text-lg font-bold text-white">{a.title}</h3>
                     <p className="text-slate-400">{a.role}</p>
-                    <div className="flex gap-4 mt-2 text-sm text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <FileCheck size={14} /> {Array.isArray(a.questions) ? a.questions.length : a.questions} questions
+                    {a.description && (
+                      <p className="text-slate-500 text-sm mt-1">
+                        {a.description}
+                      </p>
+                    )}
 
+                    <div className="flex gap-4 mt-3 text-sm text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <FileCheck size={14} /> {a.totalQuestions} questions
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Layers size={14} /> {a.sections?.length || 0} sections
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock size={14} /> {a.duration}
