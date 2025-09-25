@@ -1,5 +1,3 @@
-// src/components/Heatmap.tsx
-
 import {
   Tooltip,
   TooltipContent,

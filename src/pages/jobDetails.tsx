@@ -11,7 +11,7 @@ export default function JobDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [job, setJob] = useState < Job | null > (null);
+    const [job, setJob] = useState < Job & { skills?: string[], department?: string, hiringManager?: string, salaryMin?: number, salaryMax?: number } | null > (null);
     const [loading, setLoading] = useState(true);
     const [openEdit, setOpenEdit] = useState(false);
     const [pipeline, setPipeline] = useState < Record < CandidateStage, number >> ({
@@ -147,9 +147,13 @@ export default function JobDetails() {
 
                         <ContentSection icon={Tags} title="Skills & Tags" style={{ animationDelay: '400ms' }}>
                             <div className="flex flex-wrap gap-2">
-                                {job.tags?.map((tag, idx) => (
-                                    <span key={idx} className="skill-tag">{tag}</span>
+                                {/* Polyfill: if job.skills is missing, use job.tags as skills */}
+                                {Array.isArray((job.skills ?? job.tags)) && (job.skills ?? job.tags).length > 0 && (job.skills ?? job.tags).map((skill, idx) => (
+                                    <span key={"skill-"+idx} className="skill-tag">{skill}</span>
                                 ))}
+                                {(!job.skills && !job.tags) || ((job.skills ?? job.tags)?.length === 0) ? (
+                                    <span className="text-stone-400">No skills/tags specified</span>
+                                ) : null}
                             </div>
                         </ContentSection>
                     </div>
@@ -177,28 +181,31 @@ export default function JobDetails() {
                         
                         <ContentSection icon={Briefcase} title="Job Information" style={{ animationDelay: '600ms' }}>
                             <div className="space-y-4 text-sm">
-                                <InfoItem icon={Building} label="DEPARTMENT" value={job.department || 'Not Specified'} />
-                                <InfoItem icon={UserCheck} label="HIRING MANAGER" value={job.hiringManager || 'Not Specified'} />
+                                <InfoItem icon={Building} label="DEPARTMENT" value={job.department ? job.department : 'Not Specified'} />
+                                <InfoItem icon={UserCheck} label="HIRING MANAGER" value={job.hiringManager ? job.hiringManager : 'Not Specified'} />
                                 <InfoItem icon={DollarSign} label="SALARY RANGE" value={salaryDisplay} />
                                 <InfoItem icon={Calendar} label="CREATED" value={new Date().toLocaleDateString()} />
                             </div>
                         </ContentSection>
                         
                         <ContentSection icon={Eye} title="Quick Actions" style={{ animationDelay: '700ms' }}>
-                            <div className="flex flex-col gap-3">
-                                <button
-                className="quick-action-button primary"
-                onClick={() => navigate(`/jobs/${job.id}/candidates`)}
-              >
-                👥 View Candidates
-              </button>
-
-              <button
-                className="quick-action-button secondary"
-                onClick={() => navigate(`/jobs/${job.id}/assessments`)}
-              >
-                📑 View Assessments
-              </button>
+                            <div className="flex flex-col gap-4">
+                                <div>
+                                    <button
+                                        className="quick-action-btn primary w-full"
+                                        onClick={() => navigate(`/jobs/${job.id}/candidates`)}
+                                    >
+                                        View Candidates
+                                    </button>
+                                </div>
+                                <div>
+                                    <button
+                                        className="quick-action-btn secondary w-full"
+                                        onClick={() => navigate(`/jobs/${job.id}/assessments`)}
+                                    >
+                                        View Assessments
+                                    </button>
+                                </div>
                             </div>
                         </ContentSection>
                     </div>
@@ -335,13 +342,45 @@ const Style = () => (
     .skill-tag:hover { background-color: #14b8a6; color: white; transform: translateY(-2px); }
     
     .quick-action-btn {
-        width: 100%; display: flex; align-items: center; justify-content: center;
-        padding: 0.75rem; font-weight: 600; border-radius: 0.5rem; transition: all 0.3s ease;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.85rem 0;
+        font-weight: 600;
+        border-radius: 0.7rem;
+        font-size: 1.05rem;
+        border: 1.5px solid transparent;
+        transition: all 0.25s cubic-bezier(.4,0,.2,1);
+        box-shadow: 0 2px 8px -2px rgba(13,148,136,0.07);
+        cursor: pointer;
     }
-    .quick-action-btn.primary { background-color: #f0fdfa; color: #0d9488; border: 1px solid #99f6e4; }
-    .quick-action-btn.primary:hover { background-color: #ccfbf1; border-color: #5eead4; transform: scale(1.03); }
-    .quick-action-btn.secondary { background-color: #fafaf9; color: #78716c; border: 1px solid #e7e5e4; }
-    .quick-action-btn.secondary:hover { background-color: #f5f5f4; border-color: #d6d3d1; transform: scale(1.03); }
+    .quick-action-btn.primary {
+        background: linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%);
+        color: #fff;
+        border-color: #14b8a6;
+        box-shadow: 0 4px 16px -4px rgba(20,184,166,0.13);
+    }
+    .quick-action-btn.primary:hover {
+        background: linear-gradient(90deg, #0ea5e9 0%, #14b8a6 100%);
+        color: #fff;
+        border-color: #0ea5e9;
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 8px 24px -6px rgba(14,165,233,0.18);
+    }
+    .quick-action-btn.secondary {
+        background: linear-gradient(90deg, #f5f5f4 0%, #e0e7ef 100%);
+        color: #0d9488;
+        border-color: #e0e7ef;
+        box-shadow: 0 2px 8px -2px rgba(13,148,136,0.04);
+    }
+    .quick-action-btn.secondary:hover {
+        background: linear-gradient(90deg, #e0e7ef 0%, #f5f5f4 100%);
+        color: #0ea5e9;
+        border-color: #0ea5e9;
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 8px 24px -6px rgba(14,165,233,0.10);
+    }
 
     .icon-wrapper {
         background-color: #f0fdfa; /* teal-50 */
@@ -398,3 +437,4 @@ const Style = () => (
     }
   `}</style>
 );
+

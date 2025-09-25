@@ -11,17 +11,12 @@ return (
 <div className="flex items-center gap-3">
 </div>
 <div className="flex items-center gap-4">
-<Button variant="ghost" size="icon" onClick={() => setDark(!dark)}>
-{dark ? <Sun /> : <Moon />}
-</Button>
-<Button variant="ghost" size="icon"><Bell /></Button>
-<Button variant="ghost" size="icon"><Settings /></Button>
 <div className="flex items-center gap-2 cursor-pointer">
 <Avatar>
 <span className="sr-only">Profile</span>
 </Avatar>
 <div>
-<div className="text-sm font-semibold">Sarah Mitchell</div>
+<div className="text-sm font-semibold">Entnt Team</div>
 <div className="text-xs text-muted-foreground">HR Manager</div>
 </div>
 </div>

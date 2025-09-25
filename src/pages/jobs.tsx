@@ -282,7 +282,6 @@ export default function JobsPage() {
 
           const processedData = result.data.map((job: Job) => ({
             ...job,
-            skills: job.skills && job.skills.length > 0 ? job.skills : ['Node.js', 'React', 'TypeScript', 'AWS', 'Docker'],
             companyIcon: <Briefcase className="h-5 w-5 text-indigo-500" />
           }));
 
@@ -348,7 +347,6 @@ export default function JobsPage() {
         const result = await jobsRes.json();
         const processedData = result.data.map((job: Job) => ({
           ...job,
-          skills: job.skills && job.skills.length > 0 ? job.skills : ['Node.js', 'React', 'TypeScript', 'AWS', 'Docker'],
           companyIcon: <Briefcase className="h-5 w-5 text-indigo-500" />
         }));
         setJobs(processedData || []);
