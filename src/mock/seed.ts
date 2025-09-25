@@ -27,75 +27,173 @@ export async function seed() {
   const jobCount = await db.jobs.count();
   if (jobCount > 0) return; // already seeded
 
-  // 25 Jobs
-  const jobTitles = [
-    "Frontend Developer","Backend Engineer","Full Stack Developer","DevOps Engineer",
-    "Data Scientist","Machine Learning Engineer","Product Manager","UI/UX Designer",
-    "QA Engineer","Mobile App Developer","Cloud Architect","Security Analyst",
-    "Business Analyst","Technical Writer","Solutions Architect","Database Administrator",
-    "Game Developer","AI Researcher","Systems Engineer","Site Reliability Engineer",
-    "Project Manager","IT Support Specialist","Network Engineer","Software Engineer Intern",
-    "Blockchain Developer",
-  ];
+const jobTitles = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Engineer",
+  "Data Scientist",
+  "Machine Learning Engineer",
+  "DevOps Engineer",
+  "Product Manager",
+  "UX/UI Designer",
+  "QA Engineer",
+  "Technical Writer",
+];
 
-  const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
-  const statuses = ["active", "archived"];
-  const locations = [
-    "San Francisco, CA","New York, NY","London, UK","Berlin, Germany",
-    "Toronto, Canada","Bangalore, India","Remote",
-  ];
-  const jobRequirements: Record<string, string[]> = {
-    "Frontend Developer": [
-      "Proficiency in React, Vue, or Angular",
-      "Strong knowledge of HTML, CSS, and JavaScript",
-      "Experience with responsive design and cross-browser compatibility",
+const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
+const statuses = ["active", "draft"] as const;
+const locations = [
+  "New York, USA",
+  "San Francisco, USA",
+  "Berlin, Germany",
+  "Bangalore, India",
+  "Remote",
+];
+
+const jobRequirements: Record<string, string[]> = {
+  "Frontend Developer": [
+    "Strong proficiency in React.js and TypeScript",
+    "Experience with modern CSS frameworks (Tailwind, Styled Components)",
+    "Understanding of RESTful APIs and GraphQL",
+    "Knowledge of responsive design and accessibility standards",
+    "Version control with Git and GitHub",
+    "Familiarity with testing libraries (Jest, React Testing Library)",
+  ],
+  "Backend Developer": [
+    "Proficiency in Node.js with Express or NestJS",
+    "Experience with relational databases (PostgreSQL, MySQL)",
+    "Understanding of REST and GraphQL APIs",
+    "Knowledge of authentication and authorization (OAuth, JWT)",
+    "Strong debugging and optimization skills",
+    "Familiarity with Docker and cloud deployment (AWS, GCP, Azure)",
+  ],
+  "Full Stack Engineer": [
+    "Solid experience with React.js and Node.js",
+    "Understanding of database design (SQL & NoSQL)",
+    "Building and consuming APIs",
+    "Cloud deployment knowledge (AWS/GCP)",
+    "CI/CD pipeline experience",
+    "Strong problem-solving skills",
+  ],
+  "Data Scientist": [
+    "Expertise in Python (NumPy, Pandas, Scikit-learn)",
+    "Machine learning model development and evaluation",
+    "Experience with deep learning frameworks (TensorFlow, PyTorch)",
+    "Strong statistical and data visualization skills",
+    "Knowledge of SQL and data pipelines",
+    "Experience deploying ML models in production",
+  ],
+  "Machine Learning Engineer": [
+    "Strong understanding of ML algorithms and optimization",
+    "Hands-on with TensorFlow, PyTorch, or Keras",
+    "Knowledge of MLOps practices",
+    "Model deployment on cloud (AWS SageMaker, GCP AI Platform)",
+    "Proficiency in Python and C++",
+    "Strong problem-solving mindset",
+  ],
+  "DevOps Engineer": [
+    "Expertise in CI/CD tools (GitHub Actions, Jenkins)",
+    "Strong understanding of Docker and Kubernetes",
+    "Cloud infrastructure management (AWS, GCP, Azure)",
+    "Infrastructure as code (Terraform, Ansible)",
+    "Monitoring tools (Prometheus, Grafana)",
+    "Strong scripting skills (Bash, Python)",
+  ],
+  "Product Manager": [
+    "Experience defining product roadmaps",
+    "Strong understanding of Agile and Scrum",
+    "Ability to translate business needs into tech requirements",
+    "Excellent communication and stakeholder management",
+    "Experience with tools like Jira, Trello",
+    "Analytical mindset with data-driven decision-making",
+  ],
+  "UX/UI Designer": [
+    "Proficiency in Figma, Sketch, or Adobe XD",
+    "Strong portfolio demonstrating design systems",
+    "Understanding of user research methods",
+    "Ability to create wireframes, prototypes, and mockups",
+    "Collaboration with developers on implementation",
+    "Knowledge of accessibility and usability standards",
+  ],
+  "QA Engineer": [
+    "Experience with automated testing (Selenium, Cypress, Playwright)",
+    "Knowledge of manual testing processes",
+    "Understanding of CI/CD integration",
+    "Familiarity with bug tracking tools (Jira, Bugzilla)",
+    "Ability to write clear test cases and reports",
+    "Strong problem-solving skills",
+  ],
+  "Technical Writer": [
+    "Excellent written communication skills",
+    "Experience writing API and developer documentation",
+    "Ability to simplify complex technical concepts",
+    "Familiarity with Markdown and documentation tools",
+    "Collaboration with developers and product managers",
+    "Attention to detail and accuracy",
+  ],
+  default: [
+    "Strong communication skills",
+    "Problem-solving mindset",
+    "Team collaboration",
+    "Basic coding knowledge",
+    "Adaptability to new technologies",
+    "Time management",
+  ],
+};
+
+const departments = [
+  "Engineering",
+  "Product",
+  "Data Science",
+  "Design",
+  "Operations",
+  "Quality Assurance",
+];
+
+const hiringManagers = [
+  "Alice Johnson",
+  "Bob Smith",
+  "Clara Davis",
+  "David Lee",
+  "Emily Zhang",
+  "Frank Wilson",
+];
+
+const salaryRanges = [
+  "$60,000 - $80,000",
+  "$80,000 - $100,000",
+  "$100,000 - $120,000",
+  "$120,000 - $150,000",
+  "$150,000 - $180,000",
+];
+
+ const jobs: Job[] = Array.from({ length: 25 }).map((_, i) => {
+  const title = jobTitles[i % jobTitles.length];
+  const type = jobTypes[i % jobTypes.length] as Job["type"];
+  const status = statuses[Math.random() > 0.3 ? 0 : 1] as Job["status"];
+  const location = locations[i % locations.length];
+  const requirements = jobRequirements[title] ?? jobRequirements.default;
+
+  return {
+    id: i + 1,
+    title,
+    slug: slugify(title),
+    status,
+    type,
+    location,
+    description: `We are looking for a passionate ${title} to join our ${departments[i % departments.length]} team. You will work closely with cross-functional teams to deliver high-quality solutions, contribute to innovation, and help us achieve our mission.`,
+    requirements,
+    tags: [
+      title.split(" ")[0].toLowerCase(),
+      type.toLowerCase(),
+      location.includes("Remote") ? "remote" : "onsite",
     ],
-    "Backend Engineer": [
-      "Experience with Node.js, Python, or Java",
-      "Understanding of RESTful APIs and microservices",
-      "Database design and query optimization skills",
-    ],
-    "Data Scientist": [
-      "Strong knowledge of Python and machine learning libraries",
-      "Experience with data visualization tools",
-      "Understanding of statistics and data modeling",
-    ],
-    "Product Manager": [
-      "Strong communication and leadership skills",
-      "Experience with agile methodologies",
-      "Ability to define product roadmap and strategy",
-    ],
-    default: [
-      "Bachelor's degree in relevant field",
-      "Strong problem-solving skills",
-      "Excellent communication and teamwork",
-    ],
+    order: i + 1,
+    department: departments[i % departments.length],
+    hiringManager: hiringManagers[i % hiringManagers.length],
+    salaryRange: salaryRanges[i % salaryRanges.length],
   };
-
-  const jobs: Job[] = Array.from({ length: 25 }).map((_, i) => {
-    const title = jobTitles[i % jobTitles.length];
-    const type = jobTypes[i % jobTypes.length] as JobType;
-    const status = statuses[Math.random() > 0.3 ? 0 : 1] as JobStatus;
-    const location = locations[i % locations.length];
-    const requirements = jobRequirements[title] ?? jobRequirements.default;
-
-    return {
-      id: i + 1,
-      title,
-      slug: slugify(title),
-      status,
-      type,
-      location,
-      description: `We are looking for a ${title} to join our growing team.`,
-      requirements,
-      tags: [
-        title.split(" ")[0].toLowerCase(),
-        type.toLowerCase(),
-        location.includes("Remote") ? "remote" : "onsite",
-      ],
-      order: i + 1,
-    };
-  });
+});
 
   const jobIds = await db.jobs.bulkAdd(jobs, { allKeys: true });
 
@@ -176,8 +274,6 @@ export async function seed() {
     ];
     await db.timeline.bulkAdd(timeline);
   }
-
-  // 3 Assessments
 
  const assessments: Assessment[] = [
   {

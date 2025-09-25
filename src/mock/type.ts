@@ -49,7 +49,7 @@ export type Question = {
   validationRules?: any;
   required?: boolean;
   conditional?: {
-    dependsOn: number;   // ✅ matches your usage
+    dependsOn: number;  
     value: any;
   };
 };
@@ -67,22 +67,19 @@ export interface UserResponse {
   createdAt: string;
 }
 
-// ✅ Notes
-
 export interface Assessment {
-  id: number;                // unique id
-  jobId: number;             // link to job
+  id: number;                
+  jobId: number;             
   title: string;
   description:string,
   role: string;
-  duration: string; // computed, can store
+  duration: string; 
   submissions:number,
   status: "Active" | "Draft";
-  sections: Section[];       // real structure
+  sections: Section[];     
   totalQuestions: number;
 }
 
-// ✅ Timeline Events
 export interface TimelineEvent {
   id?: number;
   candidateId: number;

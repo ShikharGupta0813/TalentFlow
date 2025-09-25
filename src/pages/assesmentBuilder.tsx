@@ -11,6 +11,8 @@ import { useNavigate, useParams } from "react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { removeState } from "@/lib/storage";
+// MODIFIED: Imported the ArrowLeft icon
+import { ArrowLeft } from "lucide-react";
 
 type AssessmentBuilderProps = {
   initialAssessment?: any;
@@ -25,7 +27,6 @@ export default function AssessmentBuilder({
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
 
-  // --- Save handler (create or update in DB) ---
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -64,7 +65,6 @@ export default function AssessmentBuilder({
     }
   };
 
-  // --- Draft Save handler (local only) ---
   const handleSaveDraft = () => {
     builder.setAssessment((prev: any) => ({
       ...prev,
@@ -73,7 +73,6 @@ export default function AssessmentBuilder({
     builder.saveAssessment();
   };
 
-  // --- Preview Mode ---
   if (builder.showPreview) {
     return (
       <Layout>
@@ -85,17 +84,21 @@ export default function AssessmentBuilder({
     );
   }
 
+  function onBack() {
+    navigate(-1);
+  }
+
   return (
     <Layout>
       <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900">
         {/* Header with Back */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-          <button
-            className="text-slate-500 hover:text-indigo-700 text-sm font-medium"
-            onClick={() => navigate(-1)}
-          >
-            ← Back
-          </button>
+          {/* MODIFIED: Replaced the old button with the new styled Button component */}
+          {onBack && (
+            <Button variant="ghost" onClick={onBack} className="text-slate-500">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            </Button>
+          )}
           <h1 className="text-xl font-semibold truncate">
             {builder.assessment.title || "New Assessment"}
           </h1>
@@ -104,7 +107,6 @@ export default function AssessmentBuilder({
         {/* Toolbar (Save, Preview, etc.) */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-slate-200 bg-white">
           <Toolbar builder={builder} onSave={handleSave} saving={saving} />
-          
         </div>
 
         {/* Builder Workspace: 3-column layout */}

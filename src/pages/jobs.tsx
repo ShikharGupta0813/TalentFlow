@@ -39,21 +39,30 @@ function SortableJobCard({ job, id }: { job: Job; id: number | string }) {
       navigate(`/jobs/${job.id}`);
     }
   };
+  // Mouse-move border glow effect
+  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const card = e.currentTarget as HTMLElement;
+    const rect = card.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
   return (
-    <div ref={setNodeRef} style={style} className="h-full min-h-[340px]">
-      <Card
-        className="bg-white border border-slate-200 text-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer rounded-xl flex flex-col h-full group relative"
-        onClick={handleCardClick}
-        tabIndex={0}
-        role="button"
-        aria-label={`View details for job ${job.title}`}
-      >
+    <div
+      ref={setNodeRef}
+      style={{ ...style, '--mouse-x': `${mousePos.x}px`, '--mouse-y': `${mousePos.y}px` } as React.CSSProperties}
+      className="job-card-glow bg-white border border-slate-200 text-slate-800 shadow-sm cursor-pointer rounded-xl flex flex-col h-full group relative transition-all duration-300"
+      onClick={handleCardClick}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for job ${job.title}`}
+      onMouseMove={handleMouseMove}
+    >
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
           <div className="bg-slate-100 hover:bg-slate-200 rounded p-1 cursor-grab active:cursor-grabbing drag-handle" {...attributes} {...listeners}>
             <GripVertical className="h-4 w-4 text-slate-400" />
           </div>
         </div>
-        <CardHeader className="space-y-2">
+  <CardHeader className="space-y-2 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-12 w-10 rounded-xl bg-slate-100 flex items-center justify-center">
@@ -78,7 +87,7 @@ function SortableJobCard({ job, id }: { job: Job; id: number | string }) {
           </div>
           <p className="text-sm text-slate-500 pt-1">{job.description}</p>
         </CardHeader>
-        <CardContent className="space-y-4 pt-0 flex flex-col flex-grow">
+  <CardContent className="space-y-4 pt-0 flex flex-col flex-grow z-10">
           <div className="flex items-center flex-wrap text-sm text-slate-500 gap-x-4 gap-y-2">
             <div className="flex items-center gap-2">
               <MapPin size={16} /> <span>{job.location || 'Remote'}</span>
@@ -120,7 +129,6 @@ function SortableJobCard({ job, id }: { job: Job; id: number | string }) {
             )}
           </div>
         </CardContent>
-      </Card>
     </div>
   );
 }
@@ -146,8 +154,24 @@ function SortableListJobCard({ job, id }: { job: Job; id: number | string }) {
       navigate(`/jobs/${job.id}`);
     }
   };
+  // Mouse-move border glow effect
+  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const card = e.currentTarget as HTMLElement;
+    const rect = card.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
   return (
-    <div ref={setNodeRef} style={style} className="bg-white border border-slate-200 rounded-xl shadow-sm" onClick={handleCardClick} tabIndex={0} role="button" aria-label={`View details for job ${job.title}`}> 
+    <div
+      ref={setNodeRef}
+      style={{ ...style, '--mouse-x': `${mousePos.x}px`, '--mouse-y': `${mousePos.y}px` } as React.CSSProperties}
+      className="job-card-glow bg-white border border-slate-200 rounded-xl shadow-sm cursor-pointer"
+      onClick={handleCardClick}
+      tabIndex={0}
+      role="button"
+      aria-label={`View details for job ${job.title}`}
+      onMouseMove={handleMouseMove}
+    >
       <div className="flex items-center gap-3 p-4">
         <GripVertical className="text-slate-400 cursor-grab active:cursor-grabbing drag-handle" {...attributes} {...listeners} />
         <div className="h-12 w-10 rounded-full bg-slate-100 flex items-center justify-center">
@@ -377,6 +401,138 @@ export default function JobsPage() {
 
   return (
     <Layout>
+      <style>{`
+        .job-card-glow {
+          position: relative;
+          overflow: hidden;
+          transition: box-shadow 0.3s, border-color 0.3s;
+        }
+        .job-card-glow::before {
+          content: '';
+          position: absolute;
+          top: var(--mouse-y, 50%);
+          left: var(--mouse-x, 50%);
+          width: 0;
+          height: 0;
+          background: radial-gradient(circle, rgba(20,184,166,0.18) 0%, rgba(14,165,233,0.10) 60%, rgba(20,184,166,0) 100%);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          transition: width 0.4s, height 0.4s, opacity 0.4s;
+          opacity: 0;
+          z-index: 0;
+        }
+        .job-card-glow:hover::before {
+          width: 420px;
+          height: 420px;
+          opacity: 1;
+        }
+        .job-card-glow:hover {
+          border-color: #0ea5e9;
+          box-shadow: 0 8px 32px -8px rgba(14,165,233,0.18), 0 2px 8px -2px rgba(20,184,166,0.10);
+        }
+        .selector-btn {
+          background: #f0fdfa;
+          color: #0d9488;
+          border: 1.5px solid #14b8a6;
+          border-radius: 0.5rem;
+          padding: 0.45rem 1.1rem;
+          font-weight: 600;
+          font-size: 1rem;
+          transition: all 0.2s cubic-bezier(.4,0,.2,1);
+          margin-right: 0.2rem;
+        }
+        .selector-btn.active, .selector-btn:focus, .selector-btn:hover {
+          background: linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%);
+          color: #fff;
+          border-color: #0ea5e9;
+          outline: none;
+        }
+        .selector-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .status-tab-btn {
+          background: #f0fdfa;
+          color: #0d9488;
+          border: 1.5px solid #14b8a6;
+          border-radius: 0.5rem;
+          padding: 0.45rem 1.1rem;
+          font-weight: 600;
+          font-size: 1rem;
+          transition: all 0.2s cubic-bezier(.4,0,.2,1);
+        }
+        .status-tab-btn.active, .status-tab-btn:focus, .status-tab-btn:hover {
+          background: linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%);
+          color: #fff;
+          border-color: #0ea5e9;
+          outline: none;
+        }
+        .tag-btn {
+          background: #f5f5f4;
+          color: #57534e;
+          border-radius: 9999px;
+          padding: 0.25rem 0.85rem;
+          font-size: 0.95rem;
+          font-weight: 500;
+          border: 1.5px solid #e0e7ef;
+          transition: all 0.2s cubic-bezier(.4,0,.2,1);
+        }
+        .tag-btn.selected, .tag-btn:focus, .tag-btn:hover {
+          background: linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%);
+          color: #fff;
+          border-color: #0ea5e9;
+          outline: none;
+        }
+        .page-btn {
+          background: #f0fdfa;
+          color: #0d9488;
+          border: 1.5px solid #14b8a6;
+          border-radius: 0.5rem;
+          padding: 0.35rem 0.9rem;
+          font-weight: 600;
+          font-size: 1rem;
+          margin: 0 0.1rem;
+          transition: all 0.2s cubic-bezier(.4,0,.2,1);
+        }
+        .page-btn.active, .page-btn:focus, .page-btn:hover {
+          background: linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%);
+          color: #fff;
+          border-color: #0ea5e9;
+          outline: none;
+        }
+        .primary-btn {
+          background-image: linear-gradient(45deg, #14b8a6, #0d9488);
+          color: white;
+          font-weight: 600;
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.5rem;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px -3px rgba(13, 148, 136, 0.3);
+        }
+        .primary-btn:hover {
+          transform: translateY(-3px) scale(1.05);
+          box-shadow: 0 10px 20px -5px rgba(13, 148, 136, 0.4);
+        }
+        .create-job-btn {
+          background: linear-gradient(90deg, #14b8a6 0%, #0ea5e9 100%);
+          color: #fff;
+          font-weight: 700;
+          font-size: 1.1rem;
+          padding: 0.7rem 1.6rem;
+          border-radius: 0.9rem;
+          border: none;
+          outline: none;
+          display: flex;
+          align-items: center;
+          gap: 0.7rem;
+          cursor: pointer;
+          transition: background 0.18s cubic-bezier(.4,0,.2,1), filter 0.18s cubic-bezier(.4,0,.2,1);
+        }
+        .create-job-btn:hover, .create-job-btn:focus {
+          background: linear-gradient(90deg, #0ea5e9 0%, #14b8a6 100%);
+          filter: brightness(1.08);
+        }
+      `}</style>
       <div className="p-6 space-y-6 bg-slate-50">
         <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -390,28 +546,28 @@ export default function JobsPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Button variant={view === "grid" ? "default" : "outline"} onClick={() => setView("grid")}> <Grid size={16} /> </Button>
-              <Button variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}> <List size={16} /> </Button>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2" onClick={() => setOpen(true)}><Plus size={16} /> Create Job</Button>
+              <button className={`selector-btn${view === "grid" ? " active" : ""}`} onClick={() => setView("grid")}> <Grid size={16} /> </button>
+              <button className={`selector-btn${view === "list" ? " active" : ""}`} onClick={() => setView("list")}> <List size={16} /> </button>
+              <button className="primary-btn gap-2" onClick={() => setOpen(true)}><span style={{display:'flex',alignItems:'center',gap:'0.5rem'}}><Plus size={18} />Create Job</span></button>
             </div>
           </div>
-          <Tabs defaultValue="All" onValueChange={(v: any) => setStatus(v)}>
-            <TabsList>
-              <TabsTrigger value="All">All Jobs</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex gap-2 mt-2 mb-2">
+            {['All', 'active', 'archived'].map(tab => (
+              <button
+                key={tab}
+                className={`status-tab-btn${status === tab ? ' active' : ''}`}
+                onClick={() => setStatus(tab as any)}
+              >
+                {tab === 'All' ? 'All Jobs' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
           <div className="flex flex-wrap gap-2">
             {allTags.map((tag) => (
               <button
                 key={tag}
+                className={`tag-btn${selectedTags.includes(tag) ? ' selected' : ''}`}
                 onClick={() => toggleTag(tag)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                  selectedTags.includes(tag)
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
               >
                 {tag}
               </button>
@@ -436,7 +592,7 @@ export default function JobsPage() {
               {/* Pagination Buttons */}
               <div className="flex items-center gap-1">
                 <button
-                  className={`px-3 py-1 rounded bg-slate-50 text-slate-700 border border-slate-200 ${page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100'}`}
+                  className={`page-btn${page === 1 ? ' opacity-50 cursor-not-allowed' : ''}`}
                   disabled={page === 1}
                   onClick={() => setPage(page - 1)}
                 >
@@ -445,14 +601,14 @@ export default function JobsPage() {
                 {[...Array(totalPages)].map((_, i) => (
                   <button
                     key={i + 1}
-                    className={`px-3 py-1 rounded border ${page === i + 1 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`}
+                    className={`page-btn${page === i + 1 ? ' active' : ''}`}
                     onClick={() => setPage(i + 1)}
                   >
                     {i + 1}
                   </button>
                 ))}
                 <button
-                  className={`px-3 py-1 rounded bg-slate-50 text-slate-700 border border-slate-200 ${page === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-100'}`}
+                  className={`page-btn${page === totalPages ? ' opacity-50 cursor-not-allowed' : ''}`}
                   disabled={page === totalPages}
                   onClick={() => setPage(page + 1)}
                 >
