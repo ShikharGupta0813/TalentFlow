@@ -16,7 +16,7 @@ export const Hero = () => {
         <div className="text-3xl font-bold tracking-tight text-stone-900">TalentFlow</div>
         <a href="/dashboard">
           <button className="hidden sm:block primary-btn">
-            Start Free Trial
+            Start
           </button>
         </a>
       </nav>
@@ -32,9 +32,9 @@ export const Hero = () => {
             The all-in-one hiring platform designed to help you find, interview, and hire the best talent, faster than ever.
           </p>
           <div className="fade-in-up flex justify-center items-center gap-4" style={{ animationDelay: '1.2s' }}>
-            <a href="/jobs">
+            <a href="/dashboard">
               <button className="primary-btn text-lg">
-                Post Jobs Now
+                Hiring Portal 
               </button>
             </a>
              <a href="/dashboard" className="sm:hidden">
