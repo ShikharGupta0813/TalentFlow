@@ -19,14 +19,12 @@ export default function Preview({ assessment, builder, onBack }: PreviewProps) {
         <div className="flex items-center gap-2">
           {onBack && (
             <Button variant="ghost" onClick={onBack} className="text-slate-300">
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Assessments
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back 
             </Button>
           )}
           <h1 className="text-3xl font-bold text-purple-400">Assessment Preview</h1>
         </div>
-        <Button variant="outline" className="border-purple-400 text-purple-400">
-          Edit Assessment
-        </Button>
+      
       </div>
 
       {/* Assessment Info */}

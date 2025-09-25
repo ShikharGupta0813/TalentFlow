@@ -228,6 +228,27 @@ export const handlers = [
     return HttpResponse.json({ ...body, id });
   }),
 
+ http.post("/assessments/:jobId", async ({ request, params }) => {
+  const body = (await request.json()) as Assessment;
+  const jobId = Number(params.jobId);
+
+  // 🔍 Lookup job from DB
+  const job = await db.jobs.get(jobId);
+  if (!job) {
+    return HttpResponse.json(
+      { error: `Job with id ${jobId} not found` },
+      { status: 404 }
+    );
+  }
+
+  const newAssessment = {
+    ...body,
+    jobId,
+    role: job.title, // ✅ store job role/title
+   };
+  const id = await db.assessments.add(newAssessment); // Dexie assigns id
+  return HttpResponse.json({ ...newAssessment, id });
+}),
   // UPDATE assessment
   http.put("/assessments/:id", async ({ params, request }) => {
     await randomDelay();

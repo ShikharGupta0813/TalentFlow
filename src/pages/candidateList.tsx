@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, Candidate } from "@/mock/db";
+import { db } from "@/mock/db";
+import { Candidate } from "@/mock/type";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

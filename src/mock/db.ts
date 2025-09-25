@@ -16,7 +16,7 @@ class AppDB extends Dexie {
     this.version(3).stores({
       jobs: "++id, title, slug, status, order",
       candidates: "++id, jobId, name, email, phone, appliedDate, stage",
-      assessments: "jobId",
+      assessments: "++id,jobId",
       notes: "++id, candidateId, createdAt",
       timeline: "++id, candidateId, createdAt",
       responses: "++id, assessmentId, questionId",

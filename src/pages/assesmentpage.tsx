@@ -5,6 +5,8 @@ import Layout from "@/components/layout";
 import NewAssignmentModal from "@/components/AssignmentModal";
 import { useState, useEffect } from "react";
 import Preview from "@/components/LivePreview"; // ✅ use shared Preview
+import AssessmentBuilder from "./assesmentBuilder";
+import { useNavigate } from "react-router-dom";
 
 type Assessment = {
   id: number;
@@ -25,6 +27,9 @@ export default function Assignments() {
   const [assignments, setAssignments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Assessment | null>(null);
+  const [editing, setEditing] = useState<Assessment | null>(null);
+  const navigate = useNavigate();
+  // ✅ if Preview mode
 
   useEffect(() => {
     const load = async () => {
@@ -41,7 +46,7 @@ export default function Assignments() {
     load();
   }, []);
 
-  // ✅ if Preview mode
+  // ✅ Show Preview
   if (selected) {
     return (
       <Layout>
@@ -50,19 +55,31 @@ export default function Assignments() {
     );
   }
 
+  // ✅ Show Edit Builder
+  if (editing) {
+    return <AssessmentBuilder initialAssessment={editing} />;
+  }
+
   // Stats
   const total = assignments.length;
   const active = assignments.filter((a) => a.status === "Active").length;
-  const submissions = assignments.reduce((sum, a) => sum + (a.submissions ?? 0), 0);
-  const totalQuestions = assignments.reduce((sum, a) => sum + (a.totalQuestions ?? 0), 0);
+  const submissions = assignments.reduce(
+    (sum, a) => sum + (a.submissions ?? 0),
+    0
+  );
+  const totalQuestions = assignments.reduce(
+    (sum, a) => sum + (a.totalQuestions ?? 0),
+    0
+  );
   const durations = assignments.map((a) => {
     if (!a.duration) return 0;
     const match = a.duration.match(/\d+/);
     return match ? parseInt(match[0]) : 0;
   });
-  const avgDuration = durations.length > 0
-    ? Math.round(durations.reduce((s, d) => s + d, 0) / durations.length)
-    : 0;
+  const avgDuration =
+    durations.length > 0
+      ? Math.round(durations.reduce((s, d) => s + d, 0) / durations.length)
+      : 0;
 
   return (
     <Layout>
@@ -120,7 +137,9 @@ export default function Assignments() {
                     <h3 className="text-lg font-bold text-white">{a.title}</h3>
                     <p className="text-slate-400">{a.role}</p>
                     {a.description && (
-                      <p className="text-slate-500 text-sm mt-1">{a.description}</p>
+                      <p className="text-slate-500 text-sm mt-1">
+                        {a.description}
+                      </p>
                     )}
 
                     <div className="flex gap-4 mt-3 text-sm text-slate-400">
@@ -150,10 +169,20 @@ export default function Assignments() {
                     >
                       {a.status}
                     </span>
-                    <Button variant="outline" size="sm" onClick={() => setSelected(a)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelected(a)}
+                    >
                       Preview
                     </Button>
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditing(a)} // 🔥 direct
+                    >
+                      Edit
+                    </Button>
                   </div>
                 </div>
               </Card>
