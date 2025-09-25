@@ -40,23 +40,19 @@ export interface Note {
   content: string;
   createdAt: string;
 }
-export interface Question {
+export type Question = {
   id: number;
   type: "single-choice" | "multiple-choice" | "short-text" | "long-text" | "numeric" | "file-upload";
   title: string;
-  description? :string;
-  options?: string[]; // for choice questions
-  validationRules?: {
-    required?: boolean;
-    maxLength?: number;
-    min?: number;
-    max?: number;
-  };
+  description?: string;
+  options?: string[];
+  validationRules?: any;
+  required?: boolean;
   conditional?: {
-    questionId: string;
-    value: string | number;
+    dependsOn: number;   // ✅ matches your usage
+    value: any;
   };
-}
+};
 export interface Section {
   id: number;
   title: string;

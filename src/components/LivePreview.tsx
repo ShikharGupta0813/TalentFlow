@@ -1,16 +1,60 @@
+import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 type PreviewProps = {
-  assessment?: any; // from Assignments
-  builder?: any;    // from Builder
+  assessment?: any;
+  builder?: any;
   onBack?: () => void;
 };
 
 export default function Preview({ assessment, builder, onBack }: PreviewProps) {
   const data = builder ? builder.assessment : assessment;
+  const [responses, setResponses] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   if (!data) return <p>No assessment found.</p>;
+
+  const validate = (q: any, value: any): string => {
+    if (q.required && (value == null || value === "" || (Array.isArray(value) && !value.length))) {
+      return "This field is required";
+    }
+    if (q.type === "numeric") {
+      if (q.min != null && value < q.min) return `Must be at least ${q.min}`;
+      if (q.max != null && value > q.max) return `Must be at most ${q.max}`;
+    }
+    if ((q.type === "short-text" || q.type === "long-text") && q.maxLength) {
+      if (value?.length > q.maxLength) return `Max ${q.maxLength} characters`;
+    }
+    if (q.type === "file-upload" && value) {
+      if (q.maxSize && value.size / 1024 / 1024 > q.maxSize)
+        return `File too large (max ${q.maxSize} MB)`;
+      if (q.fileTypes?.length && !q.fileTypes.includes(value.type))
+        return `Invalid file type (allowed: ${q.fileTypes.join(", ")})`;
+    }
+    return "";
+  };
+
+  const handleChange = (qid: number, value: any) => {
+    setResponses((prev) => ({ ...prev, [qid]: value }));
+    setErrors((prev) => ({ ...prev, [qid]: validate(findQuestion(qid), value) }));
+  };
+
+  const findQuestion = (qid: number) => {
+    for (const s of data.sections || []) {
+      for (const q of s.questions || []) {
+        if (q.id === qid) return q;
+      }
+    }
+    return null;
+  };
+
+  const isVisible = (q: any) => {
+    if (!q.dependsOn) return true;
+    const answer = responses[q.dependsOn];
+    return answer === q.expectedValue;
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-8">
@@ -19,12 +63,11 @@ export default function Preview({ assessment, builder, onBack }: PreviewProps) {
         <div className="flex items-center gap-2">
           {onBack && (
             <Button variant="ghost" onClick={onBack} className="text-slate-300">
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back 
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back
             </Button>
           )}
           <h1 className="text-3xl font-bold text-purple-400">Assessment Preview</h1>
         </div>
-      
       </div>
 
       {/* Assessment Info */}
@@ -64,59 +107,46 @@ export default function Preview({ assessment, builder, onBack }: PreviewProps) {
 
           {/* Section Questions */}
           <div className="bg-slate-900 p-4 rounded-b-xl border border-slate-800">
-            {s.questions?.map((q: any, qi: number) => (
-              <div
-                key={q.id}
-                className="mb-6 p-4 bg-slate-800 rounded-lg shadow"
-              >
-                {/* Question Title */}
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-purple-300 font-semibold">
-                    {si + 1}.{qi + 1}
-                  </span>
-                  <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">
-                    {q.type || "text"}
-                  </span>
-                </div>
-
-                <p className="font-medium text-white mb-1">{q.title}</p>
-                {q.description && (
-                  <p className="text-sm text-slate-400 mb-3">{q.description}</p>
-                )}
-
-                {/* Input placeholder (like candidate view) */}
-                <input
-                  type="text"
-                  disabled
-                  placeholder="Candidate’s response..."
-                  className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-slate-400 text-sm"
-                />
-
-                {/* Validation */}
-                {q.validation && (
-                  <div className="mt-3 bg-amber-900/20 border border-amber-700 text-amber-400 text-sm p-3 rounded">
-                    <p className="font-semibold mb-1">Validation requirements:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {q.validation.required && <li>This field is required</li>}
-                      {q.validation.min && (
-                        <li>Minimum {q.validation.min} characters required</li>
-                      )}
-                      {q.validation.range && (
-                        <li>
-                          Please enter a value between {q.validation.range[0]} and{" "}
-                          {q.validation.range[1]}
-                        </li>
-                      )}
-                    </ul>
+            {s.questions?.map((q: any, qi: number) =>
+              isVisible(q) ? (
+                <div
+                  key={q.id}
+                  className="mb-6 p-4 bg-slate-800 rounded-lg shadow"
+                >
+                  {/* Question Header */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-purple-300 font-semibold">
+                      {si + 1}.{qi + 1}
+                    </span>
+                    <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">
+                      {q.type || "text"}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <p className="font-medium text-white mb-1">{q.title}</p>
+                  {q.description && (
+                    <p className="text-sm text-slate-400 mb-3">
+                      {q.description}
+                    </p>
+                  )}
+
+                  {/* Candidate input (live) */}
+                  {renderInput(q, responses[q.id], (val) =>
+                    handleChange(q.id, val)
+                  )}
+
+                  {/* Live error */}
+                  {errors[q.id] && (
+                    <p className="text-red-400 text-sm mt-2">{errors[q.id]}</p>
+                  )}
+                </div>
+              ) : null
+            )}
           </div>
         </div>
       ))}
 
-      {/* Submit (disabled preview) */}
+      {/* Submit (disabled in preview) */}
       <div className="text-center mt-10">
         <Button disabled className="opacity-50 cursor-not-allowed">
           Submit Assessment
@@ -127,4 +157,92 @@ export default function Preview({ assessment, builder, onBack }: PreviewProps) {
       </div>
     </div>
   );
+}
+
+/* --- Helpers --- */
+function renderInput(q: any, value: any, onChange: (val: any) => void) {
+  switch (q.type) {
+    case "single-choice":
+      return (
+        <div className="space-y-2">
+          {q.options?.map((opt: string, i: number) => (
+            <label key={i} className="flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="radio"
+                checked={value === opt}
+                onChange={() => onChange(opt)}
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      );
+    case "multiple-choice":
+      return (
+        <div className="space-y-2">
+          {q.options?.map((opt: string, i: number) => (
+            <label key={i} className="flex items-center gap-2 text-sm text-slate-300">
+              <input
+                type="checkbox"
+                checked={value?.includes(opt)}
+                onChange={(e) => {
+                  const newVal = new Set(value || []);
+                  if (e.target.checked) newVal.add(opt);
+                  else newVal.delete(opt);
+                  onChange(Array.from(newVal));
+                }}
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      );
+    case "short-text":
+      return (
+        <input
+          type="text"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Short text response..."
+          className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-slate-200 text-sm"
+        />
+      );
+    case "long-text":
+      return (
+        <textarea
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Long text response..."
+          className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-slate-200 text-sm"
+        />
+      );
+    case "numeric":
+      return (
+        <input
+          type="number"
+          value={value || ""}
+          onChange={(e) => onChange(Number(e.target.value))}
+          placeholder="Numeric response..."
+          className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-slate-200 text-sm"
+        />
+      );
+    case "file-upload":
+      return (
+        <input
+          type="file"
+          onChange={(e) => onChange(e.target.files?.[0] || null)}
+          className="w-full text-sm text-slate-300"
+        />
+      );
+    default:
+      return (
+        <input
+          type="text"
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Candidate’s response..."
+          className="w-full px-3 py-2 rounded bg-slate-900 border border-slate-700 text-slate-200 text-sm"
+        />
+      );
+  }
 }

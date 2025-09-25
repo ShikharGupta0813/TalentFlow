@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Assessment, Section, Question } from "@/mock/type";
-import { loadState, saveState } from "@/lib/storage";
+import { loadState, saveState, removeState } from "@/lib/storage";
 
 export function useAssessmentBuilder(initialAssessment?: Assessment) {
   const [assessment, setAssessment] = useState<Assessment>(
@@ -25,14 +25,17 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
   const [previewResponses, setPreviewResponses] = useState<Record<string, any>>({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
-  // Load saved state (only if no initialAssessment provided)
+  // Load either draft or saved builder state on init
   useEffect(() => {
     if (!initialAssessment) {
+      const draft = loadState<Assessment>("assessment-draft");
       const saved = loadState<Assessment>("assessment-builder-state");
-      if (saved) {
-        setAssessment(saved);
-        if (saved.sections.length > 0) {
-          setSelectedSectionId(saved.sections[0].id);
+      const source = draft || saved;
+
+      if (source) {
+        setAssessment(source);
+        if (source.sections.length > 0) {
+          setSelectedSectionId(source.sections[0].id);
         }
       }
     } else {
@@ -42,7 +45,7 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
     }
   }, [initialAssessment]);
 
-  // Persist & recalc metrics
+  // Recalculate metrics + autosave builder state
   useEffect(() => {
     const totalQuestions = assessment.sections.reduce(
       (sum, s) => sum + s.questions.length,
@@ -110,11 +113,22 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
       validationRules:
         type === "numeric"
           ? { min: 0, max: 100, required: false }
-          : type.includes("text")
-          ? { maxLength: 200, required: false }
+          : type === "short-text"
+          ? { maxLength: 100, required: false }
+          : type === "long-text"
+          ? { maxLength: 500, required: false }
           : { required: false },
       conditional: undefined,
     };
+
+    // Special case for file upload
+    if (type === "file-upload") {
+      newQuestion.validationRules = {
+        required: false,
+        allowedTypes: ["pdf", "jpg", "png"], // extendable
+        maxSizeMB: 5,
+      };
+    }
 
     updateSection(selectedSectionId, {
       questions: [...section.questions, newQuestion],
@@ -145,13 +159,28 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
     setUnsavedChanges(true);
   };
 
-  // --- local save ---
+  // --- conditional linking
+  const setConditional = (qid: number, dependsOn: number, value: any) => {
+    updateQuestion(qid, { conditional: { dependsOn, value } });
+  };
+
+  // --- save locally as draft
+  const saveDraft = () => {
+    saveState("assessment-draft", assessment);
+    setUnsavedChanges(false);
+  };
+
+  // --- clear draft
+  const clearDraft = () => {
+    removeState("assessment-draft");
+  };
+
+  // --- local save (autosave fallback)
   const saveAssessment = () => {
     saveState(`assessment-${assessment.id}`, assessment);
     setUnsavedChanges(false);
   };
 
-  // --- mark DB save success (used after POST/PUT) ---
   const markSaved = (updated?: Assessment) => {
     if (updated) setAssessment(updated);
     setUnsavedChanges(false);
@@ -177,7 +206,10 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
     addQuestion,
     updateQuestion,
     deleteQuestion,
+    setConditional,
     saveAssessment,
-    markSaved, // ✅ new function to sync after backend save
+    saveDraft,   // ✅ explicit draft save
+    clearDraft,  // ✅ remove draft
+    markSaved,
   };
 }

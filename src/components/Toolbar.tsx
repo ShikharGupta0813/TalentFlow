@@ -28,7 +28,16 @@ export default function Toolbar({ builder, onSave, saving }: ToolbarProps) {
         >
           <Eye className="mr-2 h-4 w-4" /> Preview
         </Button>
-
+        <Button
+          variant="outline"
+          disabled={saving}
+          onClick={() => {
+            localStorage.setItem("assessment-draft", JSON.stringify(builder));
+            alert("Draft saved locally ✅");
+          }}
+        >
+          Save as Draft
+        </Button>
         {/* Save Button */}
         <Button onClick={onSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" />

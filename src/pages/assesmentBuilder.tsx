@@ -7,9 +7,10 @@ import QuestionList from "@/components/QuestionList";
 import QuestionEditor from "@/components/QuestionEditor";
 import Preview from "@/components/LivePreview";
 import QuestionTypeModal from "@/components/QuestionTypeModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button"; // ✅ added for draft button
+import { removeState } from "@/lib/storage";
 
 type AssessmentBuilderProps = {
   initialAssessment?: any; // passed directly when editing
@@ -24,12 +25,12 @@ export default function AssessmentBuilder({
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
 
-  // --- Save handler (create or update) ---
+  // --- Save handler (create or update in DB) ---
   const handleSave = async () => {
     try {
       setSaving(true);
-      const payload = builder.assessment;
-      delete payload.id; 
+      const payload = { ...builder.assessment };
+      delete payload.id; // prevent conflicts
 
       let res;
       if (initialAssessment?.id) {
@@ -52,6 +53,7 @@ export default function AssessmentBuilder({
 
       const saved = await res.json();
       builder.markSaved(saved); // ✅ reset unsaved state
+      removeState("assessment-draft"); // ✅ clear draft once saved to backend
       navigate("/assessments");
     } catch (e) {
       console.error("Save failed:", e);
@@ -59,6 +61,12 @@ export default function AssessmentBuilder({
     } finally {
       setSaving(false);
     }
+  };
+
+  // --- Draft Save handler (local only) ---
+  const handleSaveDraft = () => {
+    builder.saveAssessment(); // ✅ persists in localStorage
+    alert("Draft saved locally!");
   };
 
   // --- Preview Mode ---
@@ -77,7 +85,6 @@ export default function AssessmentBuilder({
     <Layout>
       <div className="flex flex-col min-h-screen bg-slate-900 text-white">
         {/* Header with Back */}
-        {/* Header with Back */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
           <button
             className="text-slate-400 hover:text-white text-sm"
@@ -91,7 +98,19 @@ export default function AssessmentBuilder({
         </div>
 
         {/* Toolbar (Save, Preview, etc.) */}
-        <Toolbar builder={builder} onSave={handleSave} saving={saving} />
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-800">
+          <Toolbar builder={builder} onSave={handleSave} saving={saving} />
+
+          {/* ✅ Draft button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSaveDraft}
+            disabled={!builder.unsavedChanges}
+          >
+            Save Draft
+          </Button>
+        </div>
 
         {/* Builder Workspace: 3-column layout */}
         <div className="flex flex-1 overflow-hidden">
