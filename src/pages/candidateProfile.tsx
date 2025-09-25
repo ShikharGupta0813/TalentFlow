@@ -1,7 +1,7 @@
 // candidateprofile.tsx
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Mail, Phone, Calendar, Briefcase } from "lucide-react";
 import {  Candidate, Note, TimelineEvent } from "@/mock/type";

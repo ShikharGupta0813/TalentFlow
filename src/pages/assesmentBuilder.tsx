@@ -7,7 +7,7 @@ import QuestionList from "@/components/QuestionList";
 import QuestionEditor from "@/components/QuestionEditor";
 import Preview from "@/components/LivePreview";
 import QuestionTypeModal from "@/components/QuestionTypeModal";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { removeState } from "@/lib/storage";

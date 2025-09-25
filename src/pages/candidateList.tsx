@@ -1,7 +1,7 @@
 // src/pages/candidateList.tsx
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import {  Candidate, CandidateStage } from "@/mock/type";
 import { db } from "@/mock/db";

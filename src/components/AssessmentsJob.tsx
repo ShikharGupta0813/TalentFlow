@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import Layout from "@/components/layout";
 import { Card } from "@/components/ui/card";
 import { ListChecks, Clock, CheckCircle, XCircle } from "lucide-react";

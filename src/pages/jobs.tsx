@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 // Sortable Job Card for Grid View
 function SortableJobCard({ job, id }: { job: Job; id: number | string }) {
   const {

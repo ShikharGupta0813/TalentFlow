@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Edit, Archive, Trash2, FileText, ListChecks, Tags, Users, Briefcase, Calendar, Eye, ClipboardCheck, DollarSign, UserCheck, Building } from 'lucide-react';
 import {  Job, Candidate, CandidateStage } from "@/mock/type";
 import { db } from '@/mock/db';

@@ -6,7 +6,7 @@ import NewAssignmentModal from "@/components/AssignmentModal";
 import { useState, useEffect } from "react";
 import Preview from "@/components/LivePreview"; // ✅ use shared Preview
 import AssessmentBuilder from "./assesmentBuilder";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 type Assessment = {
   id: number;
