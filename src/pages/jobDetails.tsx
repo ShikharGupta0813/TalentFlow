@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout";
-import { db, Job } from "@/mock/db";
+import { db } from "@/mock/db";
+import { Job } from "@/mock/type";
 import NewJobModal from "@/components/JobModal"; // ✅ your create job modal
 
 export default function JobDetails() {
@@ -167,8 +168,18 @@ export default function JobDetails() {
             {/* Quick Actions */}
             <Card className="p-6 bg-gray-900">
               <h3 className="text-lg font-semibold">Quick Actions</h3>
-              <Button className="w-full mt-3">👥 View Candidates</Button>
-              <Button className="w-full mt-2" variant="outline">
+              <Button
+                className="w-full mt-3"
+                onClick={() => navigate(`/jobs/${job.id}/candidates`)}
+              >
+                👥 View Candidates
+              </Button>
+
+              <Button
+                className="w-full mt-2"
+                variant="outline"
+                onClick={() => navigate(`/jobs/${job.id}/assessments`)}
+              >
                 📑 View Assessments
               </Button>
             </Card>

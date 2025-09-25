@@ -12,6 +12,8 @@ import CandidatesList from "./pages/candidateList";
 import CandidateProfile from "./pages/candidateProfile";
 import Assessments from "./pages/assesmentpage";
 import AssessmentBuilderPage from "./pages/assesmentBuilder";
+import CandidatesJob from "@/components/CandidatesJob";
+import AssessmentsJob from "@/components/AssessmentsJob";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:id" element={<JobDetails />} />
+          <Route path="/jobs/:jobId/candidates" element={<CandidatesJob />} />
+          <Route path="/jobs/:jobId/assessments" element={<AssessmentsJob />} />
           <Route path="/candidates" element={<CandidatesList/>} />
           <Route path="/candidates/:candidateId" element={<CandidateProfile />} />
           <Route path="/assessments" element={<Assessments/>} />

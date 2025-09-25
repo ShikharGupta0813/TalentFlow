@@ -17,19 +17,26 @@ export function RecentAssessments() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchAssessments() {
+    async function fetchRecent() {
       try {
         const res = await fetch("/assessments");
+        if (!res.ok) throw new Error("Failed to fetch");
         const result = await res.json();
-        setAssessments(result.data.slice(0, 5)); // show latest 5
+
+        // ✅ Sort by id (latest first) and take only top 5
+        const recent = result.data
+          .sort((a: Assessment, b: Assessment) => b.id - a.id)
+          .slice(0, 6);
+
+        setAssessments(recent);
       } catch (err) {
-        console.error("Failed to fetch assessments", err);
+        console.error("Error fetching recent assessments:", err);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAssessments();
+    fetchRecent();
   }, []);
 
   return (
@@ -52,7 +59,6 @@ export function RecentAssessments() {
                   ? a.jobTitle
                   : `Job #${a.jobId}`}
               </p>
-
               <p className="text-xs text-gray-500">{a.role || "No Role"}</p>
               <p className="text-xs text-gray-600">
                 {a.totalQuestions ?? 0} Qs • {a.sectionCount ?? 0} Sections

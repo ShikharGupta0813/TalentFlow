@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { db } from "@/mock/db";
+import { useNavigate, useParams } from "react-router-dom";
 import { Candidate } from "@/mock/type";
+import Layout from "@/components/layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import {
   Mail,
   Phone,
@@ -16,7 +17,6 @@ import {
   XCircle,
   Hourglass,
 } from "lucide-react";
-import Layout from "@/components/layout";
 import {
   Select,
   SelectContent,
@@ -24,25 +24,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Kanban from "@/components/Kanban"; // ✅ import your Kanban component
+import Kanban from "@/components/Kanban";
 
-export default function CandidatesList() {
+export default function CandidatesJob() {
   const navigate = useNavigate();
+  const { jobId } = useParams();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [filtered, setFiltered] = useState<Candidate[]>([]);
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("All");
   const [job, setJob] = useState("All Jobs");
-  const [view, setView] = useState<"list" | "kanban">("list"); // ✅ replaced "grid" with "kanban"
+  const [view, setView] = useState<"list" | "kanban">("list");
 
+  // ✅ Fetch from API
   useEffect(() => {
     (async () => {
-      const allCandidates = await db.candidates.toArray();
-      setCandidates(allCandidates);
-      setFiltered(allCandidates);
+      const res = await fetch(`/jobs/${jobId}/candidates`);
+      const data = await res.json();
+      setCandidates(data.candidates);
+      setFiltered(data.candidates);
     })();
-  }, []);
+  }, [jobId]);
 
+  // ✅ Filtering
   useEffect(() => {
     let list = [...candidates];
 
@@ -61,7 +65,7 @@ export default function CandidatesList() {
     setFiltered(list);
   }, [search, stage, job, candidates]);
 
-  // ✅ Stats calculation
+  // ✅ Stats
   const total = candidates.length;
   const hired = candidates.filter((c) => c.stage === "hired").length;
   const rejected = candidates.filter((c) => c.stage === "rejected").length;
@@ -70,13 +74,21 @@ export default function CandidatesList() {
   return (
     <Layout>
       <div className="p-6 text-white">
-        {/* Header */}
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 text-slate-300 hover:text-white"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft size={18} /> Back
+          </Button>
+        </div>
         <h1 className="text-2xl font-bold mb-2">Candidates</h1>
         <p className="text-slate-400 mb-6">
           Manage and track your talent pipeline
         </p>
 
-        {/* ✅ Stats Boxes */}
+        {/* ✅ Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <Card className="p-4 bg-slate-900 border border-slate-800 flex items-center gap-3">
             <Users className="text-blue-400" />
@@ -110,7 +122,6 @@ export default function CandidatesList() {
 
         {/* ✅ Filters */}
         <div className="flex items-center gap-3 bg-slate-900 p-4 rounded-xl border border-slate-800 mb-6">
-          {/* Search */}
           <Input
             placeholder="Search candidates..."
             value={search}
@@ -118,7 +129,6 @@ export default function CandidatesList() {
             className="bg-slate-800 border-slate-700 text-white"
           />
 
-          {/* Stage Filter */}
           <Select onValueChange={setStage} defaultValue={stage}>
             <SelectTrigger className="bg-slate-800 border-slate-700 w-40">
               <SelectValue placeholder="Stage" />
@@ -132,18 +142,19 @@ export default function CandidatesList() {
             </SelectContent>
           </Select>
 
-          {/* Job Filter */}
           <Select onValueChange={setJob} defaultValue={job}>
             <SelectTrigger className="bg-slate-800 border-slate-700 w-40">
               <SelectValue placeholder="Job" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All Jobs">All Jobs</SelectItem>
-              {[...new Set(candidates.map((c) => c.jobTitle))].map((jobTitle) => (
-                <SelectItem key={jobTitle} value={jobTitle}>
-                  {jobTitle}
-                </SelectItem>
-              ))}
+              {[...new Set(candidates.map((c) => c.jobTitle))].map(
+                (jobTitle) => (
+                  <SelectItem key={jobTitle} value={jobTitle}>
+                    {jobTitle}
+                  </SelectItem>
+                )
+              )}
             </SelectContent>
           </Select>
 
@@ -159,8 +170,8 @@ export default function CandidatesList() {
             </Button>
             <Button
               size="icon"
-              variant={view === "kanban" ? "default" : "outline"} // ✅ changed from "grid"
-              onClick={() => setView("kanban")} // ✅ set kanban
+              variant={view === "kanban" ? "default" : "outline"}
+              onClick={() => setView("kanban")}
               className="rounded-lg"
             >
               <Grid size={18} />
@@ -168,54 +179,47 @@ export default function CandidatesList() {
           </div>
         </div>
 
-        {/* Conditional Rendering */}
+        {/* ✅ Conditional Rendering */}
         {view === "list" ? (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Candidates List</h2>
-              <span className="text-slate-400">{filtered.length} results</span>
-            </div>
-
-            <div className="grid gap-4 grid-cols-1">
-              {filtered.map((c) => (
-                <Card
-                  key={c.id}
-                  onClick={() => navigate(`/candidates/${c.id}`)}
-                  className="p-4 bg-slate-900 border border-slate-800 cursor-pointer hover:shadow-lg"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-lg font-semibold">{c.name}</h2>
-                      <p className="text-sm text-slate-400 flex items-center gap-2">
-                        <Mail size={16} /> {c.email}
-                      </p>
-                      <p className="text-sm text-slate-400 flex items-center gap-2">
-                        <Phone size={16} /> {c.phone}
-                      </p>
-                      <p className="text-sm text-slate-400 flex items-center gap-2">
-                        <Hourglass size={16} /> {c.jobTitle}
-                      </p>
-                      <p className="text-sm text-slate-400 flex items-center gap-2">
-                        <Calendar size={16} /> Applied{" "}
-                        {new Date(c.appliedDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span
-                      className={`px-3 py-1 text-xs rounded-full capitalize ${
-                        c.stage === "hired"
-                          ? "bg-green-600"
-                          : c.stage === "rejected"
-                          ? "bg-red-600"
-                          : "bg-purple-600"
-                      }`}
-                    >
-                      {c.stage}
-                    </span>
+          <div className="grid gap-4 grid-cols-1">
+            {filtered.map((c) => (
+              <Card
+                key={c.id}
+                onClick={() => navigate(`/candidates/${c.id}`)}
+                className="p-4 bg-slate-900 border border-slate-800 cursor-pointer hover:shadow-lg"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-lg font-semibold">{c.name}</h2>
+                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                      <Mail size={16} /> {c.email}
+                    </p>
+                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                      <Phone size={16} /> {c.phone}
+                    </p>
+                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                      <Hourglass size={16} /> {c.jobTitle}
+                    </p>
+                    <p className="text-sm text-slate-400 flex items-center gap-2">
+                      <Calendar size={16} /> Applied{" "}
+                      {new Date(c.appliedDate).toLocaleDateString()}
+                    </p>
                   </div>
-                </Card>
-              ))}
-            </div>
-          </>
+                  <span
+                    className={`px-3 py-1 text-xs rounded-full capitalize ${
+                      c.stage === "hired"
+                        ? "bg-green-600"
+                        : c.stage === "rejected"
+                        ? "bg-red-600"
+                        : "bg-purple-600"
+                    }`}
+                  >
+                    {c.stage}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
         ) : (
           <h1>hello</h1>
         )}
