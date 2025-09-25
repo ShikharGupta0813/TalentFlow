@@ -27,47 +27,55 @@ export default function AssessmentBuilder({
 
   // --- Save handler (create or update in DB) ---
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      const payload = { ...builder.assessment };
-      delete payload.id; // prevent conflicts
+  try {
+    setSaving(true);
+    const payload = { 
+      ...builder.assessment, 
+      status: "Active", // ✅ mark as active when saving
+    };
+    delete payload.id; // prevent conflicts
 
-      let res;
-      if (initialAssessment?.id) {
-        // --- Edit mode (update existing assessment) ---
-        res = await fetch(`/assessments/${initialAssessment.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else if (jobId) {
-        // --- Create mode (new assessment for a job) ---
-        res = await fetch(`/assessments/${jobId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      }
-
-      if (!res?.ok) throw new Error("Failed to save assessment");
-
-      const saved = await res.json();
-      builder.markSaved(saved); // ✅ reset unsaved state
-      removeState("assessment-draft"); // ✅ clear draft once saved to backend
-      navigate("/assessments");
-    } catch (e) {
-      console.error("Save failed:", e);
-      alert("Failed to save assessment. Try again.");
-    } finally {
-      setSaving(false);
+    let res;
+    if (initialAssessment?.id) {
+      // --- Edit mode (update existing assessment) ---
+      res = await fetch(`/assessments/${initialAssessment.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } else if (jobId) {
+      // --- Create mode (new assessment for a job) ---
+      res = await fetch(`/assessments/${jobId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
     }
-  };
+
+    if (!res?.ok) throw new Error("Failed to save assessment");
+
+    const saved = await res.json();
+    builder.markSaved(saved); // ✅ reset unsaved state
+    removeState("assessment-draft"); // ✅ clear draft once saved to backend
+    navigate("/assessments");
+  } catch (e) {
+    console.error("Save failed:", e);
+    alert("Failed to save assessment. Try again.");
+  } finally {
+    setSaving(false);
+  }
+};
+
+
 
   // --- Draft Save handler (local only) ---
-  const handleSaveDraft = () => {
-    builder.saveAssessment(); // ✅ persists in localStorage
-    alert("Draft saved locally!");
-  };
+ const handleSaveDraft = () => {
+  builder.setAssessment((prev) => ({
+    ...prev,
+    status: "Draft",
+  }));
+  builder.saveAssessment();
+};
 
   // --- Preview Mode ---
   if (builder.showPreview) {

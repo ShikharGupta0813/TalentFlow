@@ -3,20 +3,30 @@ import { Assessment, Section, Question } from "@/mock/type";
 import { loadState, saveState, removeState } from "@/lib/storage";
 
 export function useAssessmentBuilder(initialAssessment?: Assessment) {
-  const [assessment, setAssessment] = useState<Assessment>(
-    initialAssessment || {
-      id: Date.now(),
-      jobId: Date.now(), // placeholder job link
-      title: "New Assessment",
-      description: "Describe what this assessment will evaluate...",
-      role: "Untitled Role",
-      duration: "0 mins",
-      submissions: 0,
-      status: "Draft",
-      sections: [],
-      totalQuestions: 0,
+  // --- default assessment template ---
+  const defaultAssessment: Assessment = {
+    id: Date.now(),
+    jobId: Date.now(), // placeholder link to job
+    title: "New Assessment",
+    description: "Describe what this assessment will evaluate...",
+    role: "Untitled Role",
+    duration: "0 mins",
+    submissions: 0,
+    status: "Draft",
+    sections: [],
+    totalQuestions: 0,
+  };
+
+  // --- initialize state safely ---
+  const [assessment, setAssessment] = useState<Assessment>(() => {
+    if (initialAssessment) {
+      return {
+        ...initialAssessment,
+        sections: initialAssessment.sections || [],
+      };
     }
-  );
+    return defaultAssessment;
+  });
 
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
@@ -25,30 +35,35 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
   const [previewResponses, setPreviewResponses] = useState<Record<string, any>>({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
-  // Load either draft or saved builder state on init
+  // --- load draft or saved state on init ---
   useEffect(() => {
     if (!initialAssessment) {
-      const draft = loadState<Assessment>("assessment-draft");
-      const saved = loadState<Assessment>("assessment-builder-state");
-      const source = draft || saved;
+      try {
+        const draft = loadState<Assessment>("assessment-draft");
+        const saved = loadState<Assessment>("assessment-builder-state");
+        const source = draft || saved;
 
-      if (source) {
-        setAssessment(source);
-        if (source.sections.length > 0) {
-          setSelectedSectionId(source.sections[0].id);
+        if (source) {
+          setAssessment({
+            ...source,
+            sections: source.sections || [],
+          });
+          if (source.sections && source.sections.length > 0) {
+            setSelectedSectionId(source.sections[0].id);
+          }
         }
+      } catch (err) {
+        console.error("Failed to load draft/saved assessment:", err);
       }
-    } else {
-      if (initialAssessment.sections.length > 0) {
-        setSelectedSectionId(initialAssessment.sections[0].id);
-      }
+    } else if (initialAssessment.sections?.length > 0) {
+      setSelectedSectionId(initialAssessment.sections[0].id);
     }
   }, [initialAssessment]);
 
-  // Recalculate metrics + autosave builder state
+  // --- recalc metrics & autosave ---
   useEffect(() => {
-    const totalQuestions = assessment.sections.reduce(
-      (sum, s) => sum + s.questions.length,
+    const totalQuestions = (assessment.sections || []).reduce(
+      (sum, s) => sum + (s.questions?.length || 0),
       0
     );
     const estimatedMinutes = Math.max(2, totalQuestions * 2);
@@ -65,19 +80,23 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
       }));
     }
 
-    saveState("assessment-builder-state", assessment);
+    try {
+      saveState("assessment-builder-state", assessment);
+    } catch (err) {
+      console.error("Failed to autosave builder state:", err);
+    }
   }, [assessment.sections]);
 
   // --- actions ---
   const addSection = () => {
     const newSection: Section = {
       id: Date.now(),
-      title: `Section ${assessment.sections.length + 1}`,
+      title: `Section ${(assessment.sections || []).length + 1}`,
       questions: [],
     };
     setAssessment((prev) => ({
       ...prev,
-      sections: [...prev.sections, newSection],
+      sections: [...(prev.sections || []), newSection],
     }));
     setSelectedSectionId(newSection.id);
     setUnsavedChanges(true);
@@ -86,7 +105,9 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
   const updateSection = (id: number, updates: Partial<Section>) => {
     setAssessment((prev) => ({
       ...prev,
-      sections: prev.sections.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+      sections: (prev.sections || []).map((s) =>
+        s.id === id ? { ...s, ...updates } : s
+      ),
     }));
     setUnsavedChanges(true);
   };
@@ -94,7 +115,7 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
   const deleteSection = (id: number) => {
     setAssessment((prev) => ({
       ...prev,
-      sections: prev.sections.filter((s) => s.id !== id),
+      sections: (prev.sections || []).filter((s) => s.id !== id),
     }));
     if (selectedSectionId === id) setSelectedSectionId(null);
     setUnsavedChanges(true);
@@ -121,17 +142,16 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
       conditional: undefined,
     };
 
-    // Special case for file upload
     if (type === "file-upload") {
       newQuestion.validationRules = {
         required: false,
-        allowedTypes: ["pdf", "jpg", "png"], // extendable
+        allowedTypes: ["pdf", "jpg", "png"],
         maxSizeMB: 5,
       };
     }
 
     updateSection(selectedSectionId, {
-      questions: [...section.questions, newQuestion],
+      questions: [...(section.questions || []), newQuestion],
     });
     setSelectedQuestionId(newQuestion.id);
     setShowQuestionModal(false);
@@ -159,30 +179,47 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
     setUnsavedChanges(true);
   };
 
-  // --- conditional linking
+  // --- conditional linking ---
   const setConditional = (qid: number, dependsOn: number, value: any) => {
     updateQuestion(qid, { conditional: { dependsOn, value } });
   };
 
-  // --- save locally as draft
+  // --- save draft ---
   const saveDraft = () => {
-    saveState("assessment-draft", assessment);
-    setUnsavedChanges(false);
+    try {
+      saveState("assessment-draft", assessment);
+      setUnsavedChanges(false);
+    } catch (err) {
+      console.error("Failed to save draft:", err);
+    }
   };
 
-  // --- clear draft
+  // --- clear draft ---
   const clearDraft = () => {
-    removeState("assessment-draft");
+    try {
+      removeState("assessment-draft");
+    } catch (err) {
+      console.error("Failed to clear draft:", err);
+    }
   };
 
-  // --- local save (autosave fallback)
+  // --- local save (per-assessment id) ---
   const saveAssessment = () => {
-    saveState(`assessment-${assessment.id}`, assessment);
-    setUnsavedChanges(false);
+    try {
+      saveState(`assessment-${assessment.id}`, assessment);
+      setUnsavedChanges(false);
+    } catch (err) {
+      console.error("Failed to save assessment locally:", err);
+    }
   };
 
   const markSaved = (updated?: Assessment) => {
-    if (updated) setAssessment(updated);
+    if (updated) {
+      setAssessment({
+        ...updated,
+        sections: updated.sections || [],
+      });
+    }
     setUnsavedChanges(false);
   };
 
@@ -208,8 +245,8 @@ export function useAssessmentBuilder(initialAssessment?: Assessment) {
     deleteQuestion,
     setConditional,
     saveAssessment,
-    saveDraft,   // ✅ explicit draft save
-    clearDraft,  // ✅ remove draft
+    saveDraft,
+    clearDraft,
     markSaved,
   };
 }

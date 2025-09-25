@@ -1,49 +1,72 @@
-import { Eye, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-type ToolbarProps = {
-  builder: any;
-  onSave: () => Promise<void>;
-  saving: boolean;
-};
-
-export default function Toolbar({ builder, onSave, saving }: ToolbarProps) {
+export default function Toolbar({ builder, onSave, saving }: any) {
   return (
-    <div className="flex justify-between items-center border-b border-slate-800 bg-slate-900 p-4">
-      <div className="flex items-center gap-2">
-        <h2 className="font-semibold">Assessment Builder</h2>
-      </div>
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-800">
+      {/* Assessment Title */}
+      <input
+        className="px-2 py-1 rounded bg-slate-800 text-white border border-slate-700"
+        value={builder.assessment.title}
+        onChange={(e) =>
+          builder.setAssessment((prev: any) => ({
+            ...prev,
+            title: e.target.value,
+          }))
+        }
+        placeholder="Assessment title"
+      />
 
-      <div className="flex gap-2 items-center">
-        {builder.unsavedChanges && (
-          <span className="text-orange-500">Unsaved Changes</span>
-        )}
+      {/* Job Title */}
+      <input
+        className="px-2 py-1 rounded bg-slate-800 text-white border border-slate-700"
+        value={builder.assessment.role}
+        onChange={(e) =>
+          builder.setAssessment((prev: any) => ({
+            ...prev,
+            role: e.target.value,
+          }))
+        }
+        placeholder="Job Title / Role"
+      />
 
-        {/* Preview Button */}
+      {/* Status Badge */}
+      <Badge
+        className={
+          builder.assessment.status === "Active"
+            ? "bg-green-600 text-white"
+            : "bg-slate-600 text-white"
+        }
+      >
+        {builder.assessment.status === "Active" ? "Active" : "Draft"}
+      </Badge>
+
+      {/* Save (Publish) button */}
+      <Button
+        className="bg-green-600 hover:bg-green-700"
+        onClick={onSave}
+        disabled={saving}
+      >
+        {saving ? "Saving..." : "Save"}
+      </Button>
+
+      {/* Save Draft button ONLY when draft (no navigation) */}
+      {builder.assessment.status === "Draft" && (
         <Button
-          variant="outline"
-          onClick={() => builder.setShowPreview(true)}
-          disabled={saving}
+          className="bg-slate-600 hover:bg-slate-700"
+          onClick={() => builder.saveDraft()}
         >
-          <Eye className="mr-2 h-4 w-4" /> Preview
+          Save Draft
         </Button>
-        <Button
-          variant="outline"
-          disabled={saving}
-          onClick={() => {
-            localStorage.setItem("assessment-draft", JSON.stringify(builder));
-            alert("Draft saved locally ✅");
-          }}
-        >
-          Save as Draft
-        </Button>
-        {/* Save Button */}
-        <Button onClick={onSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? "Saving..." : "Save"}
-        </Button>
-      </div>
+      )}
+
+      {/* Preview button */}
+      <Button
+        className="bg-blue-600 hover:bg-blue-700"
+        onClick={() => builder.setShowPreview(true)}
+      >
+        Preview
+      </Button>
     </div>
   );
 }
