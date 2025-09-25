@@ -83,12 +83,13 @@ export default function Assignments() {
 
   return (
     <Layout>
-      <div className="p-6">
+      <div className="p-6 bg-gray-50 min-h-screen">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-purple-400">Assessments</h1>
+          <h1 className="text-3xl font-bold" style={{ color: '#0d9488' }}>Assessments</h1>
           <Button
-            className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+            className="text-white hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: '#0d9488' }}
             onClick={() => setOpen(true)}
           >
             + New Assessment
@@ -98,51 +99,51 @@ export default function Assignments() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6 bg-slate-900 border border-slate-800">
-            <h2 className="text-sm text-slate-400">Total Assessments</h2>
-            <p className="text-2xl font-bold">{total}</p>
+          <Card className="p-6 bg-white border border-gray-200 shadow-sm">
+            <h2 className="text-sm text-gray-500">Total Assessments</h2>
+            <p className="text-2xl font-bold text-gray-900">{total}</p>
           </Card>
-          <Card className="p-6 bg-slate-900 border border-slate-800">
-            <h2 className="text-sm text-slate-400">Active Assessments</h2>
-            <p className="text-2xl font-bold text-green-400">{active}</p>
+          <Card className="p-6 bg-white border border-gray-200 shadow-sm">
+            <h2 className="text-sm text-gray-500">Active Assessments</h2>
+            <p className="text-2xl font-bold text-green-600">{active}</p>
           </Card>
-          <Card className="p-6 bg-slate-900 border border-slate-800">
-            <h2 className="text-sm text-slate-400">Avg Duration</h2>
-            <p className="text-2xl font-bold text-yellow-400">
+          <Card className="p-6 bg-white border border-gray-200 shadow-sm">
+            <h2 className="text-sm text-gray-500">Avg Duration</h2>
+            <p className="text-2xl font-bold text-amber-600">
               {avgDuration} min
             </p>
           </Card>
-          <Card className="p-6 bg-slate-900 border border-slate-800">
-            <h2 className="text-sm text-slate-400">Total Submissions</h2>
-            <p className="text-2xl font-bold text-blue-400">{submissions}</p>
+          <Card className="p-6 bg-white border border-gray-200 shadow-sm">
+            <h2 className="text-sm text-gray-500">Total Submissions</h2>
+            <p className="text-2xl font-bold text-blue-600">{submissions}</p>
           </Card>
         </div>
 
         {/* List */}
-        <h2 className="text-xl font-semibold mb-4">Your Assessments</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-900">Your Assessments</h2>
         {loading ? (
-          <p className="text-slate-400">Loading assessments...</p>
+          <p className="text-gray-500">Loading assessments...</p>
         ) : assignments.length === 0 ? (
-          <p className="text-slate-400">No assessments created yet.</p>
+          <p className="text-gray-500">No assessments created yet.</p>
         ) : (
           <div className="space-y-4">
             {assignments.map((a) => (
               <Card
                 key={a.id}
-                className="p-6 bg-slate-900 border border-slate-800 hover:shadow-lg transition"
+                className="p-6 bg-white border border-gray-200 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-center">
                   {/* Left */}
                   <div>
-                    <h3 className="text-lg font-bold text-white">{a.title}</h3>
-                    <p className="text-slate-400">{a.role}</p>
+                    <h3 className="text-lg font-bold text-gray-900">{a.title}</h3>
+                    <p className="text-gray-600">{a.role}</p>
                     {a.description && (
-                      <p className="text-slate-500 text-sm mt-1">
+                      <p className="text-gray-500 text-sm mt-1">
                         {a.description}
                       </p>
                     )}
 
-                    <div className="flex gap-4 mt-3 text-sm text-slate-400">
+                    <div className="flex gap-4 mt-3 text-sm text-gray-500">
                       <span className="flex items-center gap-1">
                         <FileCheck size={14} /> {a.totalQuestions} questions
                       </span>
@@ -163,8 +164,8 @@ export default function Assignments() {
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         a.status === "Active"
-                          ? "bg-green-500/10 text-green-400 border border-green-400/30"
-                          : "bg-yellow-500/10 text-yellow-400 border border-yellow-400/30"
+                          ? "bg-green-100 text-green-700 border border-green-200"
+                          : "bg-yellow-100 text-yellow-700 border border-yellow-200"
                       }`}
                     >
                       {a.status}
@@ -172,6 +173,7 @@ export default function Assignments() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
                       onClick={() => setSelected(a)}
                     >
                       Preview
@@ -179,6 +181,7 @@ export default function Assignments() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
                       onClick={() => setEditing(a)} // 🔥 direct
                     >
                       Edit

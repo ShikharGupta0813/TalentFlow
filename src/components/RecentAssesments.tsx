@@ -54,11 +54,7 @@ export function RecentAssessments() {
               key={a.id}
               className="h-28 rounded-md bg-purple-100 shadow-sm flex flex-col justify-center items-center hover:shadow-md transition p-2"
             >
-              <p className="text-sm font-semibold text-gray-800 text-center">
-                {a.jobTitle && a.jobTitle !== "Unknown Job"
-                  ? a.jobTitle
-                  : `Job #${a.jobId}`}
-              </p>
+              
               <p className="text-xs text-gray-500">{a.role || "No Role"}</p>
               <p className="text-xs text-gray-600">
                 {a.totalQuestions ?? 0} Qs • {a.sectionCount ?? 0} Sections

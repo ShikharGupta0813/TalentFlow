@@ -97,35 +97,6 @@ export const handlers = [
     const job = await db.jobs.get(id);
     return HttpResponse.json(job);
   }),
-  /**
-   * GET /jobs/:jobId/candidates
-   * Fetch all candidates and their assignments for a given job
-   */
-  http.get("/jobs/:jobId/candidates", async ({ params }) => {
-    const jobId = Number(params.jobId);
-    if (isNaN(jobId)) {
-      return HttpResponse.json({ error: "Invalid jobId" }, { status: 400 });
-    }
-
-    const candidates = await db.candidates
-      .where("jobId")
-      .equals(jobId)
-      .toArray();
-    return HttpResponse.json({ jobId, candidates });
-  }),
-
-  http.get("/jobs/:jobId/assignments", async ({ params }) => {
-    const jobId = Number(params.jobId);
-    if (isNaN(jobId)) {
-      return HttpResponse.json({ error: "Invalid jobId" }, { status: 400 });
-    }
-
-    const assignments = await db.assessments
-      .where("jobId")
-      .equals(jobId)
-      .toArray();
-    return HttpResponse.json({ jobId, assignments });
-  }),
 
   http.patch("/jobs/:id/reorder", async ({ request }) => {
     await randomDelay();
@@ -150,6 +121,32 @@ export const handlers = [
 
     await db.jobs.bulkPut(jobs);
     return HttpResponse.json(moving);
+  }),
+
+  http.get("/jobs/:jobId/candidates", async ({ params }) => {
+    const jobId = Number(params.jobId);
+    if (isNaN(jobId)) {
+      return HttpResponse.json({ error: "Invalid jobId" }, { status: 400 });
+    }
+
+    const candidates = await db.candidates
+      .where("jobId")
+      .equals(jobId)
+      .toArray();
+    return HttpResponse.json({ jobId, candidates });
+  }),
+
+  http.get("/jobs/:jobId/assignments", async ({ params }) => {
+    const jobId = Number(params.jobId);
+    if (isNaN(jobId)) {
+      return HttpResponse.json({ error: "Invalid jobId" }, { status: 400 });
+    }
+
+    const assignments = await db.assessments
+      .where("jobId")
+      .equals(jobId)
+      .toArray();
+    return HttpResponse.json({ jobId, assignments });
   }),
 
   // ---- Candidates ----
@@ -256,34 +253,28 @@ export const handlers = [
     const id = await db.assessments.add(body);
     return HttpResponse.json({ ...body, id });
   }),
-  http.get("/assessments/recent", async () => {
-    const all = await db.assessments.toArray();
-    const recent = all.slice(0, 5); // just grab first 5
 
-    return HttpResponse.json({ data: recent });
-  }),
+ http.post("/assessments/:jobId", async ({ request, params }) => {
+  const body = (await request.json()) as Assessment;
+  const jobId = Number(params.jobId);
 
-  http.post("/assessments/:jobId", async ({ request, params }) => {
-    const body = (await request.json()) as Assessment;
-    const jobId = Number(params.jobId);
+  // 🔍 Lookup job from DB
+  const job = await db.jobs.get(jobId);
+  if (!job) {
+    return HttpResponse.json(
+      { error: `Job with id ${jobId} not found` },
+      { status: 404 }
+    );
+  }
 
-    // 🔍 Lookup job from DB
-    const job = await db.jobs.get(jobId);
-    if (!job) {
-      return HttpResponse.json(
-        { error: `Job with id ${jobId} not found` },
-        { status: 404 }
-      );
-    }
-
-    const newAssessment = {
-      ...body,
-      jobId,
-      role: job.title, // ✅ store job role/title
-    };
-    const id = await db.assessments.add(newAssessment); // Dexie assigns id
-    return HttpResponse.json({ ...newAssessment, id });
-  }),
+  const newAssessment = {
+    ...body,
+    jobId,
+    role: job.title, // ✅ store job role/title
+   };
+  const id = await db.assessments.add(newAssessment); // Dexie assigns id
+  return HttpResponse.json({ ...newAssessment, id });
+}),
   // UPDATE assessment
   http.put("/assessments/:id", async ({ params, request }) => {
     await randomDelay();

@@ -1,5 +1,5 @@
-import { CandidateStage, Candidate } from "@/mock/db";
-import { CandidateCard } from "./CandidateCard";
+import { CandidateStage, Candidate } from "@/mock/type";
+import CandidateCard from "@/components/CandidateCard";
 
 export function StageColumn({
   stage,
